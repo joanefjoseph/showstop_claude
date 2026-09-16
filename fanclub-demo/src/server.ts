@@ -1,8 +1,8 @@
-import { demoConfig } from './config';
-import { isSeeded, openDb } from './db/connection';
-import { seedDatabase } from './db/seed';
-import { createMembershipApi } from './mocks/membershipApi';
-import { createTicketVendorApi } from './mocks/ticketVendorApi';
+import { demoConfig } from './config.ts';
+import { isSeeded, openDb } from './db/connection.ts';
+import { seedDatabase } from './db/seed.ts';
+import { createMembershipApi } from './mocks/membershipApi.ts';
+import { createTicketVendorApi } from './mocks/ticketVendorApi.ts';
 const db = openDb();
 if (process.argv.includes('--reset') || !isSeeded(db)) {
   console.log(`Seeding demo database at ${demoConfig.dbPath}`);

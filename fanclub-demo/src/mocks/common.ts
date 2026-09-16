@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import type { ErrorRequestHandler, RequestHandler } from 'express';
-import { demoConfig } from '../config';
-import type { Money } from '../bridgeContracts';
+import { demoConfig } from '../config.ts';
+import type { Money } from '../bridgeContracts.ts';
 /** Error with an HTTP status. The body uses `{ error, message }`, which the bridge's mapError reads. */
 export class HttpError extends Error {
   constructor(

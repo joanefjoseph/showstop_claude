@@ -1,9 +1,6 @@
 /**
  * Single import point for everything borrowed from the bridge codebase.
- * The mocks are typed against the bridge's own wire contracts, so
- * `npm run typecheck` fails if a mock response drifts from what the bridge expects.
- *
- * Adjust these paths if the two projects are not sibling folders.
+ * Paths use `.js` extensions because both projects are now ESM ("type": "module").
  */
 export type {
   CartStatus,
@@ -17,14 +14,14 @@ export type {
   VendorOrder,
   VendorSeat,
   VendorTicket,
-} from '../../fanclub-ticketing-bridge/src/types/vendor';
+} from '../../fanclub-ticketing-bridge/src/types/vendor.ts';
 export type {
   MembershipRecord,
   MembershipStatus,
   MembershipTier,
   MembershipVerifyRequest,
   MembershipVerifyResponse,
-} from '../../fanclub-ticketing-bridge/src/types/membership';
+} from '../../fanclub-ticketing-bridge/src/types/membership.ts';
 export type {
   BillingResponse,
   CommitResponse,
@@ -32,5 +29,5 @@ export type {
   MembershipVerificationResponse,
   MobileTicketResponse,
   SeatLockResponse,
-} from '../../fanclub-ticketing-bridge/src/types/api';
-export { generateRotatingBarcode } from '../../fanclub-ticketing-bridge/src/services/rotatingBarcode';
+} from '../../fanclub-ticketing-bridge/src/types/api.ts';
+export { generateRotatingBarcode } from '../../fanclub-ticketing-bridge/src/services/rotatingBarcode.ts';

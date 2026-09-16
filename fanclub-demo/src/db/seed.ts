@@ -1,7 +1,19 @@
+import { pathToFileURL } from 'node:url';
 import type Database from 'better-sqlite3';
-import { demoConfig } from '../config';
-import type { SeatStatus } from '../bridgeContracts';
-import { applySchema, openDb } from './connection';
+import { demoConfig } from '../config.ts';
+import type { SeatStatus } from '../bridgeContracts.ts';
+import { applySchema, openDb } from './connection.ts';
+/* ... unchanged seed data and seeders ... */
+// ESM replacement for `require.main === module`
+const isMain = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMain) {
+  const db = openDb();
+  const counts = seedDatabase(db);
+  console.log(`Seeded ${demoConfig.dbPath}`);
+  console.table(counts);
+  db.close();
+}
+
 const cents = (amount: number) => Math.round(amount * 100);
 const SEEDED_AT = '2026-09-01T12:00:00.000Z';
 /* ─────────────────────────── Membership data ─────────────────────────── */
@@ -205,11 +217,4 @@ export function seedDatabase(db: Database.Database): Record<string, number> {
   return Object.fromEntries(
     tables.map((t) => [t, (db.prepare(`SELECT COUNT(*) AS n FROM ${t}`).get() as { n: number }).n]),
   );
-}
-if (require.main === module) {
-  const db = openDb();
-  const counts = seedDatabase(db);
-  console.log(`Seeded ${demoConfig.dbPath}`);
-  console.table(counts);
-  db.close();
 }

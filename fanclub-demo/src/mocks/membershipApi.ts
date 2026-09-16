@@ -1,14 +1,14 @@
 import express from 'express';
 import type Database from 'better-sqlite3';
-import { demoConfig } from '../config';
+import { demoConfig } from '../config.ts';
 import type {
   MembershipRecord,
   MembershipStatus,
   MembershipTier,
   MembershipVerifyRequest,
   MembershipVerifyResponse,
-} from '../bridgeContracts';
-import { HttpError, errorHandler, notFound, requestLog, simulatedLatency } from './common';
+} from '../bridgeContracts.ts';
+import { HttpError, errorHandler, notFound, requestLog, simulatedLatency } from './common.ts';
 interface MemberRow {
   membership_id: string;
   email: string;

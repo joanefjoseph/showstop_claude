@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import { demoConfig } from './config';
+import { demoConfig } from './config.ts';
 import {
   generateRotatingBarcode,
   type BillingResponse,
@@ -8,7 +8,7 @@ import {
   type MembershipVerificationResponse,
   type MobileTicketResponse,
   type SeatLockResponse,
-} from './bridgeContracts';
+} from './bridgeContracts.ts';
 const BRIDGE = demoConfig.bridgeUrl;
 let passed = 0;
 let failed = 0;
@@ -169,4 +169,4 @@ async function main() {
   console.log(`\n${passed} passed, ${failed} failed`);
   process.exit(failed ? 1 : 0);
 }
-main();
+await main();
