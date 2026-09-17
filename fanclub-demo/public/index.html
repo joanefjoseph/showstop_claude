@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fanclub Ticketing Bridge · API Console</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Fanclub Ticketing Bridge <span>API Console</span></h1>
+    <div class="session">
+      <span>Member <code id="session-member">—</code></span>
+      <span>Cart <code id="session-cart">—</code></span>
+      <span>Bridge <code id="bridge-url">—</code></span>
+    </div>
+    <div id="health" class="health"><span class="dot"></span><span class="label">Checking bridge…</span></div>
+  </header>
+  <main>
+    <nav class="steps">
+      <a href="#panel-availability">1 · Availability</a>
+      <a href="#panel-verify">2 · Verify membership</a>
+      <a href="#panel-lock">3 · Lock seats</a>
+      <a href="#panel-billing">4 · Attach billing</a>
+      <a href="#panel-commit">5 · Commit</a>
+      <a href="#panel-ticket">6 · Mobile ticket</a>
+      <p class="muted">Results from each step fill in the forms for the next one.</p>
+    </nav>
+    <div class="panels">
+      <!-- 1 ─────────────────────────────────────────────── -->
+      <section class="panel" id="panel-availability">
+        <header><span class="method get">GET</span><code>/events/:eventId/availability</code></header>
+        <p class="hint">Seat map and pricing for an event. Click seats in the result to select them for locking.
+          Try <code>evt_123</code>, <code>evt_456</code> (GA festival), <code>evt_999</code> (sold out) or <code>evt_nope</code> (404).</p>
+        <form id="form-availability" class="grid">
+          <label>Event ID <input name="eventId" list="events" value="evt_123" required /></label>
+          <div class="actions"><button type="submit">Submit</button></div>
+        </form>
+        <div class="result" id="result-availability"></div>
+      </section>
+      <!-- 2 ─────────────────────────────────────────────── -->
+      <section class="panel" id="panel-verify">
+        <header><span class="method post">POST</span><code>/membership/verify</code></header>
+        <p class="hint">Looks a fan up by email. Try <code>fan@example.com</code>, <code>silver@example.com</code> (max 4 seats),
+          <code>expired@example.com</code> (not eligible) or <code>nobody@example.com</code> (404).</p>
+        <form id="form-verify" class="grid">
+          <label>Email <input name="email" list="emails" value="fan@example.com" /></label>
+          <div class="actions"><button type="submit">Submit</button></div>
+        </form>
+        <div class="result" id="result-verify"></div>
+      </section>
+      <!-- 3 ─────────────────────────────────────────────── -->
+      <section class="panel" id="panel-lock">
+        <header><span class="method post">POST</span><code>/carts/lock</code></header>
+        <p class="hint">Holds seats for the configured hold time. Leave the membership ID blank to see the 401,
+          or use <code>mem_x02</code> (suspended) for a 403.</p>
+        <form id="form-lock" class="grid">
+          <label>X-Membership-Id header <input name="membershipId" list="member-ids" placeholder="mem_9f3" /></label>
+          <label>Event ID <input name="eventId" list="events" value="evt_123" /></label>
+          <label class="wide">Seat IDs <span class="muted">(comma or space separated)</span>
+            <textarea name="seatIds" rows="2" placeholder="s_101_A_7, s_101_A_8"></textarea>
+          </label>
+          <div class="actions"><button type="submit">Submit</button></div>
+        </form>
+        <div class="result" id="result-lock"></div>
+      </section>
+      <!-- 4 ─────────────────────────────────────────────── -->
+      <section class="panel" id="panel-billing">
+        <header><span class="method put">PUT</span><code>/carts/:cartId/billing</code></header>
+        <p class="hint">Attaches customer, address and a tokenised payment instrument. Use
+          <code>tok_decline_insufficient_funds</code> to make the commit fail with 402.</p>
+        <form id="form-billing" class="grid">
+          <fieldset>
+            <legend>Cart</legend>
+            <label>Cart ID <input name="cartId" placeholder="cart_…" required /></label>
+          </fieldset>
+          <fieldset>
+            <legend>Customer</legend>
+            <label>First name <input name="firstName" value="Ada" /></label>
+            <label>Last name <input name="lastName" value="Lovelace" /></label>
+            <label>Email <input name="email" value="fan@example.com" /></label>
+            <label>Phone <span class="muted">(optional)</span><input name="phone" value="+15125550142" /></label>
+          </fieldset>
+          <fieldset>
+            <legend>Address</legend>
+            <label>Line 1 <input name="line1" value="1 Main St" /></label>
+            <label>Line 2 <span class="muted">(optional)</span><input name="line2" /></label>
+            <label>City <input name="city" value="Austin" /></label>
+            <label>Region <input name="region" value="TX" /></label>
+            <label>Postal code <input name="postalCode" value="78701" /></label>
+            <label>Country (ISO-2) <input name="country" value="US" /></label>
+          </fieldset>
+          <fieldset>
+            <legend>Payment</legend>
+            <label>Payment token <input name="paymentToken" list="tokens" value="tok_visa_4242" /></label>
+            <label>Method
+              <select name="method"><option>CARD</option><option>WALLET</option></select>
+            </label>
+          </fieldset>
+          <div class="actions"><button type="submit">Submit</button></div>
+        </form>
+        <div class="result" id="result-billing"></div>
+      </section>
+      <!-- 5 ─────────────────────────────────────────────── -->
+      <section class="panel" id="panel-commit">
+        <header><span class="method put">PUT</span><code>/carts/:cartId/commit</code></header>
+        <p class="hint">Converts the hold into an order. Re-submitting with the same idempotency key returns the same order.
+          If the key is blank, the bridge uses <code>commit:&lt;cartId&gt;</code>.</p>
+        <form id="form-commit" class="grid">
+          <label>Cart ID <input name="cartId" placeholder="cart_…" required /></label>
+          <label>Idempotency-Key header <span class="muted">(optional)</span><input name="idempotencyKey" /></label>
+          <div class="actions">
+            <button type="button" class="secondary" id="gen-key">Generate key</button>
+            <button type="submit">Submit</button>
+          </div>
+        </form>
+        <div class="result" id="result-commit"></div>
+      </section>
+      <!-- 6 ─────────────────────────────────────────────── -->
+      <section class="panel" id="panel-ticket">
+        <header><span class="method get">GET</span><code>/tickets/:ticketId</code></header>
+        <p class="hint">Mobile ticket with the current barcode. Seeded tickets: <code>tkt_seed_rotating</code> and
+          <code>tkt_seed_static</code> (owner <code>mem_9f3</code>), <code>tkt_seed_platinum</code> (owner <code>mem_p01</code>).</p>
+        <form id="form-ticket" class="grid">
+          <label>X-Membership-Id header <input name="membershipId" list="member-ids" placeholder="mem_9f3" /></label>
+          <label>Ticket ID <input name="ticketId" list="ticket-ids" required /></label>
+          <label class="inline"><input type="checkbox" name="autoRefresh" checked /> Auto-refresh when the barcode rotates</label>
+          <div class="actions"><button type="submit">Submit</button></div>
+        </form>
+        <div class="result" id="result-ticket"></div>
+      </section>
+    </div>
+  </main>
+  <!-- Suggestions from the seeded demo database -->
+  <datalist id="events">
+    <option value="evt_123">The Midnight Echoes (Austin)</option>
+    <option value="evt_456">Neon Harbor Festival (Seattle)</option>
+    <option value="evt_999">Acoustic Sessions (sold out)</option>
+    <option value="evt_nope">Unknown event (404)</option>
+  </datalist>
+  <datalist id="emails">
+    <option value="fan@example.com">Gold · active</option>
+    <option value="platinum@example.com">Platinum · active</option>
+    <option value="silver@example.com">Silver · active · max 4</option>
+    <option value="basic@example.com">Basic · active · default limit</option>
+    <option value="expired@example.com">Expired</option>
+    <option value="suspended@example.com">Suspended</option>
+    <option value="pending@example.com">Pending</option>
+    <option value="nobody@example.com">Not a member</option>
+  </datalist>
+  <datalist id="member-ids">
+    <option value="mem_9f3">Ada Lovelace · Gold</option>
+    <option value="mem_p01">Grace Hopper · Platinum</option>
+    <option value="mem_s22">Alan Turing · Silver</option>
+    <option value="mem_b07">Katherine Johnson · Basic</option>
+    <option value="mem_x01">Expired</option>
+    <option value="mem_x02">Suspended</option>
+    <option value="mem_x03">Pending</option>
+  </datalist>
+  <datalist id="ticket-ids">
+    <option value="tkt_seed_rotating">mem_9f3 · rotating</option>
+    <option value="tkt_seed_static">mem_9f3 · static</option>
+    <option value="tkt_seed_platinum">mem_p01 · rotating</option>
+  </datalist>
+  <datalist id="tokens">
+    <option value="tok_visa_4242">Succeeds</option>
+    <option value="tok_mastercard_5454">Succeeds</option>
+    <option value="tok_decline_insufficient_funds">Declined at commit (402)</option>
+    <option value="4242424242424242">Not a token (rejected)</option>
+  </datalist>
+</body>
+</html>
