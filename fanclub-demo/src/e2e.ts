@@ -49,14 +49,42 @@ const billing = (paymentToken: string, firstName = 'Ada', lastName = 'Lovelace',
   address: { line1: '1 Main St', city: 'Austin', region: 'TX', postalCode: '78701', country: 'US' },
   payment: { paymentToken, method: 'CARD' },
 });
-/* ─────────────────────────── happy path ─────────────────────────── */
+async function probe(url: string, init: RequestInit = {}) {
+  try {
+    const res = await fetch(url, init);
+    const text = await res.text();
+    let body: any = text;
+    try { body = JSON.parse(text); } catch { /* not JSON */ }
+    return { status: res.status, body };
+  } catch (err) {
+    return { status: 0, body: { cause: String((err as Error).cause ?? err) } };
+  }
+}
+async function preflight() {
+  section('Preflight: mock upstreams called directly (bypassing the bridge)');
+  const vendorBase = `http://localhost:${demoConfig.vendorPort}/v1`;
+  const vendor = await probe(`${vendorBase}/events/evt_123/availability`, {
+    headers: { 'X-Api-Key': demoConfig.vendorApiKey, 'X-Partner-Id': demoConfig.vendorPartnerId },
+  });
+  must(`ticket vendor mock answers at ${vendorBase} (got ${vendor.status})`,
+    vendor.status === 200 && vendor.body?.eventId === 'evt_123', vendor);
+  const membershipBase = `http://localhost:${demoConfig.membershipPort}/api`;
+  const membership = await probe(`${membershipBase}/members/verify`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${demoConfig.membershipApiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: 'fan@example.com' }),
+  });
+  must(`membership mock answers at ${membershipBase} (got ${membership.status})`,
+    membership.status === 200 && membership.body?.found === true, membership);
+  info(`Bridge .env must use TICKET_VENDOR_BASE_URL=${vendorBase} and MEMBERSHIP_BASE_URL=${membershipBase}`);
+}/* ─────────────────────────── happy path ─────────────────────────── */
 async function happyPath() {
   section('0. GET /health');
   const health = await call('GET', '/health');
   must('bridge is up', health.status === 200, health.body);
   section('1. GET /events/:eventId/availability');
   const avail = await call<EventAvailabilityResponse>('GET', '/events/evt_123/availability');
-  must('200 OK', avail.status === 200, avail.body);
+  must('200 OK (got ${avail.status})', avail.status === 200, avail.body);
   must('event details mapped', avail.body.eventName === 'The Midnight Echoes — World Tour' && avail.body.venue.city === 'Austin');
   must('seats grouped by section with price ranges', avail.body.sections.some((s) => s.section === '101' && s.priceRange !== null));
   must('totals include held and sold seats', avail.body.totals.held > 0 && avail.body.totals.sold > 0, avail.body.totals);
@@ -64,7 +92,7 @@ async function happyPath() {
   info(`totals ${JSON.stringify(avail.body.totals)}; locking ${seats.join(', ')}`);
   section('2. POST /membership/verify');
   const verify = await call<MembershipVerificationResponse>('POST', '/membership/verify', { body: { email: 'FAN@example.com' } });
-  must('200 OK', verify.status === 200, verify.body);
+  must('200 OK (got ${verify.status})', verify.status === 200, verify.body);
   must('verified and eligible to purchase', verify.body.verified && verify.body.eligibleToPurchase, verify.body);
   must('resolves mem_9f3 / Gold tier', verify.body.membershipId === 'mem_9f3' && verify.body.tier?.name === 'Gold', verify.body);
   const memberId = verify.body.membershipId!;
@@ -73,7 +101,7 @@ async function happyPath() {
     headers: { 'X-Membership-Id': memberId },
     body: { eventId: 'evt_123', seatIds: seats },
   });
-  must('201 Created', lock.status === 201, lock.body);
+  must('201 Created (got ${lock.status})', lock.status === 201, lock.body);
   must('cart OPEN with 2 seats', lock.body.status === 'OPEN' && lock.body.seats.length === 2, lock.body);
   must('hold countdown running', lock.body.holdSecondsRemaining > 0, lock.body);
   must('totals = subtotal + fees', Math.abs(lock.body.totals.subtotal.amount + lock.body.totals.fees.amount - lock.body.totals.total.amount) < 0.001, lock.body.totals);
@@ -83,13 +111,13 @@ async function happyPath() {
   check('locked seats no longer listed as available', !afterLock.body.sections.flatMap((s) => s.seats).some((s) => seats.includes(s.seatId)));
   section('4. PUT /carts/:cartId/billing');
   const bill = await call<BillingResponse>('PUT', `/carts/${cartId}/billing`, { body: billing('tok_visa_4242') });
-  must('200 OK', bill.status === 200, bill.body);
+  must('200 OK (got ${bill.status})', bill.status === 200, bill.body);
   must('status BILLING_ATTACHED', bill.body.status === 'BILLING_ATTACHED', bill.body);
   must('total unchanged from lock', bill.body.total.amount === lock.body.totals.total.amount, bill.body);
   section('5. PUT /carts/:cartId/commit');
   const idemKey = `e2e-${cartId}`;
   const commit = await call<CommitResponse>('PUT', `/carts/${cartId}/commit`, { headers: { 'Idempotency-Key': idemKey } });
-  must('200 OK', commit.status === 200, commit.body);
+  must('200 OK (got ${commit.status})', commit.status === 200, commit.body);
   must('order CONFIRMED with 2 tickets', commit.body.status === 'CONFIRMED' && commit.body.tickets.length === 2, commit.body);
   info(`order ${commit.body.orderId}, tickets ${commit.body.tickets.map((t) => t.ticketId).join(', ')}`);
   const replay = await call<CommitResponse>('PUT', `/carts/${cartId}/commit`, { headers: { 'Idempotency-Key': idemKey } });
@@ -97,7 +125,7 @@ async function happyPath() {
   section('6. GET /tickets/:ticketId');
   const first = commit.body.tickets[0];
   const ticket = await call<MobileTicketResponse>('GET', first.mobileTicketUrl, { headers: { 'X-Membership-Id': memberId } });
-  must('200 OK', ticket.status === 200, ticket.body);
+  must('200 OK (got ${ticket.status})', ticket.status === 200, ticket.body);
   must('holder name from billing', ticket.body.holderName === 'Ada Lovelace', ticket.body);
   must('rotating PDF417 barcode', ticket.body.barcode.rotating && ticket.body.barcode.format === 'PDF417', ticket.body.barcode);
   must('nextRotationAt in the future', new Date(ticket.body.barcode.nextRotationAt!).getTime() > Date.now(), ticket.body.barcode);
@@ -158,6 +186,7 @@ async function guardrails() {
 async function main() {
   console.log(`Fanclub Ticketing Bridge end-to-end demo → ${BRIDGE}`);
   try {
+    await preflight();
     await happyPath();
     await guardrails();
   } catch (err) {

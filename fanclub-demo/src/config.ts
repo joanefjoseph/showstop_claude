@@ -4,6 +4,7 @@ const num = (v: string | undefined, fallback: number) => (v ? Number(v) : fallba
 export const demoConfig = {
   vendorPort: num(process.env.VENDOR_PORT, 4001),
   membershipPort: num(process.env.MEMBERSHIP_PORT, 4002),
+  consolePort: num(process.env.CONSOLE_PORT, 4000),
   vendorApiKey: process.env.VENDOR_API_KEY ?? 'demo-vendor-key',
   vendorPartnerId: process.env.VENDOR_PARTNER_ID ?? 'fanclub-partner-001',
   membershipApiKey: process.env.MEMBERSHIP_API_KEY ?? 'demo-membership-key',

@@ -1,0 +1,10 @@
+{
+  "description": "Create and visualize website wireframes to illustrate design changes, enhancing user experience for designers and developers.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

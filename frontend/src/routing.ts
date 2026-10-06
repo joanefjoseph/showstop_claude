@@ -1,0 +1,7 @@
+/**
+ * Props every page receives from App.
+ * `params` holds the query string of the URL hash, e.g. #/2c?venue=los-angeles
+ */
+export interface PageProps {
+  params: URLSearchParams;
+}

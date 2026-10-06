@@ -1,0 +1,277 @@
+/* =====================================================================
+   Weverse notice page (page 2A) — port of the downloaded style.css.
+   Every rule is scoped under .wv-page: Vite injects imported CSS
+   globally and App.tsx imports all pages at startup, so unscoped
+   resets (*, body, a, ul, button) would leak into pages 2B–2E.
+   ===================================================================== */
+
+/* Reset and base styles (was: *) */
+.wv-page,
+.wv-page * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* (was: body) */
+.wv-page {
+  font-family: Pretendard, -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: #111;
+  background-color: #fff;
+  line-height: 1.5;
+  min-height: 100vh;
+  display: flow-root; /* keeps .layout-container's top margin inside the white page */
+}
+
+/* Tailwind's preflight (loaded via index.css) sets headings to font-weight: inherit.
+   Restore the browser default the original standalone page relied on. */
+.wv-page h2,
+.wv-page h3,
+.wv-page h4 {
+  font-weight: bold;
+}
+
+.wv-page a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.wv-page ul {
+  list-style: none;
+}
+
+.wv-page button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+/* Header */
+.wv-page .global-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  padding: 0 24px;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background-color: #fff;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  z-index: 1000;
+}
+
+.wv-page .header-left,
+.wv-page .header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.wv-page .community-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+.wv-page .icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  position: relative;
+}
+
+.wv-page .profile-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #e4e4e4;
+}
+
+.wv-page .badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #08ccca;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 12px;
+}
+
+/* Layout */
+.wv-page .layout-container {
+  display: flex;
+  justify-content: center;
+  max-width: 1200px;
+  margin: 60px auto 0;
+}
+
+/* Sidebar */
+.wv-page .sidebar {
+  width: 240px;
+  height: calc(100vh - 60px);
+  position: fixed;
+  left: calc(50% - 600px);
+  top: 60px;
+  padding: 24px 0;
+  overflow-y: auto;
+}
+
+.wv-page .menu-section {
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.wv-page .section-title {
+  font-size: 12px;
+  color: #999;
+  padding: 0 24px 8px;
+  text-transform: uppercase;
+}
+
+.wv-page .menu-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 24px;
+  color: #111;
+  font-weight: 500;
+}
+
+.wv-page .menu-item:hover {
+  background-color: #f8f8f8;
+}
+
+.wv-page .avatar-placeholder,
+.wv-page .avatar-img {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background-color: #e4e4e4;
+  margin-right: 12px;
+}
+
+.wv-page .menu-footer {
+  padding: 0 24px;
+}
+
+.wv-page .jelly-btn {
+  color: #ff9f0e;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+/* Main Content */
+.wv-page .main-content {
+  flex: 1;
+  margin-left: 240px;
+  margin-right: 300px;
+  padding: 40px;
+  max-width: 660px;
+}
+
+.wv-page .notice-header {
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  padding-bottom: 20px;
+}
+
+.wv-page .notice-title {
+  font-size: 24px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.wv-page .notice-meta {
+  font-size: 13px;
+  color: #999;
+}
+
+.wv-page .notice-body {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.wv-page .notice-body p {
+  margin-bottom: 16px;
+}
+
+.wv-page .image-wrapper {
+  margin: 24px 0;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.wv-page .image-wrapper img {
+  width: 100%;
+  display: block;
+}
+
+.wv-page .link {
+  color: #3190ff;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+/* Right Panel */
+.wv-page .right-panel {
+  width: 300px;
+  height: calc(100vh - 60px);
+  position: fixed;
+  right: calc(50% - 600px);
+  top: 60px;
+  padding: 32px 24px;
+}
+
+.wv-page .recent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.wv-page .view-more {
+  font-size: 12px;
+  color: #999;
+}
+
+.wv-page .recent-item a {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.wv-page .recent-title {
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.wv-page .recent-date {
+  font-size: 12px;
+  color: #999;
+}
+
+.wv-page .badge-new {
+  background-color: #08ccca;
+  color: white;
+  font-size: 9px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* Responsive centering fix for smaller desktops */
+@media (max-width: 1200px) {
+  .wv-page .sidebar { left: 0; }
+  .wv-page .right-panel { right: 0; }
+}

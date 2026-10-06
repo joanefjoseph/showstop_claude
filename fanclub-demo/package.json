@@ -7,8 +7,9 @@
   "scripts": {
     "start": "tsx src/server.ts",
     "start:fresh": "tsx src/server.ts --reset",
-    "dev": "npx tsx watch src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "db:reset": "tsx src/db/seed.ts",
+    "console": "tsx src/console/server.ts",
     "e2e": "tsx src/e2e.ts",
     "typecheck": "tsc --noEmit"
   },
