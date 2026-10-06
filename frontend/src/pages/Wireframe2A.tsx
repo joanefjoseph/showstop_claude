@@ -77,18 +77,32 @@ type MemberState =
 
   /* Pre-approved card — carried over unchanged from the previous Wireframe2A (lines 14–76) */
 function PreApprovedCard({ member }: { member: MemberState }) {
-  const handle =
-    member.kind === "ready" ? `@${member.member.membershipId}` :
-    member.kind === "loading" ? "verifying…" : "unverified";
-  const tierLabel =
-    member.kind === "ready" ? `${member.member.tierName} Member` :
-    member.kind === "loading" ? "checking membership" : member.message;
-  const eligible = member.kind === "ready" && member.member.eligibleToPurchase;
+  const m = member.kind === "ready" ? member.member : null;
+
+  // Presale eligible = the tier includes presale access AND the membership is active
+  const hasPresale = !!m && m.presaleAccess && m.eligibleToPurchase;
+
+  const handle = m ? `@${m.membershipId}` : member.kind === "loading" ? "verifying…" : "unverified";
+  const tierLabel = m
+    ? `${m.tierName} Member`
+    : member.kind === "loading" ? "checking membership" : member.kind === "error" ? member.message : "unverified";
+
   const statusText =
-    eligible ? "Status: Pre-Approved for Day 1 Presale Window" :
+    hasPresale ? "Status: Pre-Approved for Day 1 Presale Window" :
     member.kind === "loading" ? "Status: Checking presale eligibility…" :
-    member.kind === "ready" ? `Status: Not eligible — ${member.member.reason ?? member.member.status}` :
-    "Status: Membership could not be verified";
+    member.kind === "error" ? "Status: Membership could not be verified" :
+    !m!.eligibleToPurchase ? `Status: Not eligible — ${m!.reason ?? m!.status}` :
+    `Status: ${m!.tierName} tier does not include presale access`;
+
+  // Button state
+  const isLoading = member.kind === "loading";
+  const buttonLabel = hasPresale
+    ? "🎫 Go to Native Tour Box Office (Tickets Tab)"
+    : isLoading
+      ? "Checking presale access…"
+      : "Upgrade Your Membership";
+  const buttonColor = hasPresale || isLoading ? "var(--accent)" : "var(--success)";
+
   return (
     <div
       style={{
@@ -105,10 +119,7 @@ function PreApprovedCard({ member }: { member: MemberState }) {
       >
         🌟 ARMY MEMBERSHIP EXCLUSIVE BENEFIT
       </div>
-      <div
-        className="font-mono-display"
-        style={{ fontSize: 11, color: "var(--ink)", marginBottom: 4 }}
-      >
+      <div className="font-mono-display" style={{ fontSize: 11, color: "var(--ink)", marginBottom: 4 }}>
         You are logged in as:{" "}
         <strong>{handle}</strong> ({tierLabel})
       </div>
@@ -116,14 +127,14 @@ function PreApprovedCard({ member }: { member: MemberState }) {
         className="font-mono-display"
         style={{
           fontSize: 11,
-          color: eligible ? "var(--success)" : "var(--warn)",
+          color: hasPresale ? "var(--success)" : "var(--warn)",
           marginBottom: 10,
           display: "flex",
           alignItems: "center",
           gap: 6,
         }}
       >
-        <span>{eligible ? "✅" : member.kind === "loading" ? "⏳" : "⚠️"}</span> {statusText}
+        <span>{hasPresale ? "✅" : isLoading ? "⏳" : "⚠️"}</span> {statusText}
       </div>
       <div
         className="font-mono-display"
@@ -131,11 +142,16 @@ function PreApprovedCard({ member }: { member: MemberState }) {
       >
         Presale Opens: Today at 10:00 AM EST
       </div>
-      {/* Links to 2B — Tour Box Office */}
+
+      {/* Presale tiers → 2B (Tour Box Office). Everyone else → dead "Upgrade" link. */}
       <a
-        href="#/2b"
+        href={hasPresale ? "#/2b" : "#"}
+        onClick={(e) => {
+          if (!hasPresale) e.preventDefault(); // dead link: stays on 2A
+        }}
+        aria-disabled={!hasPresale}
         style={{
-          background: "var(--accent)",
+          background: buttonColor,
           color: "#fff",
           padding: "9px 16px",
           fontSize: 11,
@@ -146,10 +162,11 @@ function PreApprovedCard({ member }: { member: MemberState }) {
           alignItems: "center",
           gap: 8,
           textDecoration: "none",
-          cursor: "pointer",
+          cursor: isLoading ? "wait" : "pointer",
+          opacity: isLoading ? 0.6 : 1,
         }}
       >
-        🎫 Go to Native Tour Box Office (Tickets Tab)
+        {buttonLabel}
       </a>
     </div>
   );

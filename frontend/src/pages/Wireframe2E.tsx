@@ -7,21 +7,52 @@ import { fetchMobileTicket } from "../api/purchaseFlow";
 import { describeError } from "../api/bridgeClient";
 import { formatEventDate } from "../api/format";
 import type { MobileTicketResponse } from "../api/bridgeTypes";
+import TicketBarcode from "../components/TicketBarcode";
+import { useCountdown } from "../api/useCountdown";
 
 export default function Wireframe2E({ params }: PageProps) {
   // Venue passed through from 2D (#/2e?venue=<id>); defaults to New York / MetLife Stadium
   const venue = findVenue(params.get("venue"));
 
-  // GET /tickets/:ticketId — drives the ticket details (barcode graphic stays simulated)
+  // GET /tickets/:ticketId — the bridge derives a fresh rotating value on every call,
+  // so re-fetch just after each nextRotationAt to keep the barcode current.
   const [ticket, setTicket] = useState<MobileTicketResponse | null>(null);
   const [ticketError, setTicketError] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
-    fetchMobileTicket()
-      .then((t) => { if (!cancelled) setTicket(t); })
-      .catch((err) => { if (!cancelled) setTicketError(describeError(err)); });
-    return () => { cancelled = true; };
+    let timer: number | undefined;
+    let hadTicket = false;
+
+    const load = async () => {
+      try {
+        const t = await fetchMobileTicket();
+        if (cancelled) return;
+        hadTicket = true;
+        setTicket(t);
+        setTicketError(null);
+        if (t.barcode.rotating && t.barcode.nextRotationAt) {
+          // +250 ms so we land in the new window; min 1 s guards against client/server clock skew
+          const delay = Math.max(1000, Date.parse(t.barcode.nextRotationAt) - Date.now() + 250);
+          timer = window.setTimeout(load, delay);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setTicketError(describeError(err));
+        // A refresh failed after we already showed a ticket → keep trying; first-load failures stop here
+        if (hadTicket) timer = window.setTimeout(load, 5000);
+      }
+    };
+
+    void load();
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, []);
+
+  const rotationSecondsLeft = useCountdown(
+    ticket?.barcode.rotating ? ticket.barcode.nextRotationAt : undefined,
+  );
 
   const seatRows: Array<[string, string]> = [
     ["SEC", ticket?.seat.section ?? "—"],
@@ -90,47 +121,42 @@ export default function Wireframe2E({ params }: PageProps) {
             ))}
           </div>
 
-          {/* Barcode area (simulated rolling barcode) */}
+          {/* Barcode area — real barcode from GET /tickets/:ticketId */}
           <div style={{ padding: "12px 14px", textAlign: "center" }}>
-            <div
-              style={{
-                border: "1px solid var(--border)",
-                padding: "8px 12px",
-                background: "#f8f8f8",
-                marginBottom: 6,
-                overflow: "hidden",
-                position: "relative",
-              }}
-            >
-              <svg viewBox="0 0 300 50" style={{ width: "100%", height: 50 }} xmlns="http://www.w3.org/2000/svg">
-                {Array.from({ length: 60 }).map((_, i) => (
-                  <rect
-                    key={i}
-                    x={i * 5}
-                    y={0}
-                    width={[2, 1, 3, 2, 1, 3, 2, 1][i % 8]}
-                    height={50}
-                    fill={i % 3 === 0 ? "#0047ff" : "#0a0a0a"}
-                    opacity={i % 3 === 0 ? 0.7 : 1}
-                  />
-                ))}
-              </svg>
-              {/* Blue bar overlay (SafeTix animation indicator) */}
+            {ticket ? (
+              <TicketBarcode barcode={ticket.barcode} />
+            ) : (
               <div
+                className="font-mono-display"
                 style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: 6,
-                  background: "linear-gradient(90deg, #0047ff, #4488ff, #0047ff)",
-                  opacity: 0.9,
+                  border: "1px solid var(--border)",
+                  padding: "22px 12px",
+                  background: "#f8f8f8",
+                  marginBottom: 6,
+                  fontSize: 10,
+                  color: "var(--ink-muted)",
                 }}
-              />
+              >
+                {ticketError ? "Barcode unavailable" : "Loading secure barcode…"}
+              </div>
+            )}
+
+            <div className="font-mono-display" style={{ fontSize: 9, color: "var(--accent)", marginBottom: 4 }}>
+              {ticket?.barcode.rotating
+                ? `🔵 Blue Bar Rotating (Ticketmaster SafeTix™) — Updates every ${ticket.barcode.rotatesEverySeconds}s` +
+                  (rotationSecondsLeft !== null ? ` · next in ${rotationSecondsLeft}s` : "")
+                : ticket
+                  ? "Static barcode — does not rotate"
+                  : "🔵 Blue Bar Rotating (Ticketmaster SafeTix™)"}
             </div>
-            <div className="font-mono-display" style={{ fontSize: 9, color: "var(--accent)", marginBottom: 8 }}>
-              🔵 Blue Bar Rotating (Ticketmaster SafeTix™) — Updates every 15s
-            </div>
+            {ticket && (
+              <div
+                className="font-mono-display"
+                style={{ fontSize: 8, color: "var(--ink-muted)", marginBottom: 8, wordBreak: "break-all" }}
+              >
+                {ticket.barcode.format} · {ticket.barcode.value}
+              </div>
+            )}
             <BridgeErrorNote message={ticketError} />
 
             <div className="font-mono-display" style={{ fontSize: 10, color: "var(--ink-muted)", marginBottom: 10 }}>

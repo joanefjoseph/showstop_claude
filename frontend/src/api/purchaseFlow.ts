@@ -37,6 +37,7 @@ export async function verifyMembership(): Promise<MemberInfo> {
     status: res.status!,
     tierId: res.tier!.tierId,
     tierName: res.tier!.name,
+    presaleAccess: res.tier?.presaleAccess === true, // NEW — null/undefined (e.g. Basic) = no access
     eligibleToPurchase: res.eligibleToPurchase,
     reason: res.reason,
   };
