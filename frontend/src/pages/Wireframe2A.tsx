@@ -1,4 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { verifyMembership } from "../api/purchaseFlow";
+import type { MemberInfo } from "../api/purchaseSession";
+import { describeError } from "../api/bridgeClient";
 import "../components/NoticeLayout.css";
 import {
   ICON_MENU,
@@ -67,8 +70,25 @@ function SvgIcon({ markup }: { markup: string }) {
   );
 }
 
-/* Pre-approved card — carried over unchanged from the previous Wireframe2A (lines 14–76) */
-function PreApprovedCard() {
+type MemberState =
+  | { kind: "loading" }
+  | { kind: "ready"; member: MemberInfo }
+  | { kind: "error"; message: string };
+
+  /* Pre-approved card — carried over unchanged from the previous Wireframe2A (lines 14–76) */
+function PreApprovedCard({ member }: { member: MemberState }) {
+  const handle =
+    member.kind === "ready" ? `@${member.member.membershipId}` :
+    member.kind === "loading" ? "verifying…" : "unverified";
+  const tierLabel =
+    member.kind === "ready" ? `${member.member.tierName} Member` :
+    member.kind === "loading" ? "checking membership" : member.message;
+  const eligible = member.kind === "ready" && member.member.eligibleToPurchase;
+  const statusText =
+    eligible ? "Status: Pre-Approved for Day 1 Presale Window" :
+    member.kind === "loading" ? "Status: Checking presale eligibility…" :
+    member.kind === "ready" ? `Status: Not eligible — ${member.member.reason ?? member.member.status}` :
+    "Status: Membership could not be verified";
   return (
     <div
       style={{
@@ -90,20 +110,20 @@ function PreApprovedCard() {
         style={{ fontSize: 11, color: "var(--ink)", marginBottom: 4 }}
       >
         You are logged in as:{" "}
-        <strong>@CaratArmyStay</strong> (ARMY Global Regular Member)
+        <strong>{handle}</strong> ({tierLabel})
       </div>
       <div
         className="font-mono-display"
         style={{
           fontSize: 11,
-          color: "var(--success)",
+          color: eligible ? "var(--success)" : "var(--warn)",
           marginBottom: 10,
           display: "flex",
           alignItems: "center",
           gap: 6,
         }}
       >
-        <span>✅</span> Status: Pre-Approved for Day 1 Presale Window
+        <span>{eligible ? "✅" : member.kind === "loading" ? "⏳" : "⚠️"}</span> {statusText}
       </div>
       <div
         className="font-mono-display"
@@ -143,6 +163,15 @@ export default function Wireframe2A() {
     return () => {
       document.title = previousTitle;
     };
+  }, []);
+  // Step 2 of the bridge flow: POST /membership/verify with EMAIL_ADDRESS from .env
+  const [member, setMember] = useState<MemberState>({ kind: "loading" });
+  useEffect(() => {
+    let cancelled = false;
+    verifyMembership()
+      .then((m) => { if (!cancelled) setMember({ kind: "ready", member: m }); })
+      .catch((err) => { if (!cancelled) setMember({ kind: "error", message: describeError(err) }); });
+    return () => { cancelled = true; };
   }, []);
 
   // Port of script.js
@@ -222,7 +251,7 @@ export default function Wireframe2A() {
             </div>
 
             {/* Pre-approved card (kept from the former Wireframe2A) */}
-            <PreApprovedCard />
+          <PreApprovedCard member={member} />
 
             <div className="notice-body">
               <p>

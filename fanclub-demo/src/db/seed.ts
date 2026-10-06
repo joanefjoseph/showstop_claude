@@ -3,7 +3,7 @@ import type Database from 'better-sqlite3';
 import { demoConfig } from '../config.ts';
 import type { SeatStatus } from '../bridgeContracts.ts';
 import { applySchema, openDb } from './connection.ts';
-/* ... unchanged seed data and seeders ... */
+import { seedTourEvents } from './tourSeed.ts';
 // ESM replacement for `require.main === module`
 const isMain = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
@@ -18,12 +18,14 @@ const cents = (amount: number) => Math.round(amount * 100);
 const SEEDED_AT = '2026-09-01T12:00:00.000Z';
 /* ─────────────────────────── Membership data ─────────────────────────── */
 const TIERS = [
+  { tier_id: 'tier_army', name: 'BTS Army', level: 1, max: 8, presale: 1 },
   { tier_id: 'tier_platinum', name: 'Platinum', level: 4, max: 10, presale: 1 },
   { tier_id: 'tier_gold', name: 'Gold', level: 3, max: 8, presale: 1 },
   { tier_id: 'tier_silver', name: 'Silver', level: 2, max: 4, presale: 0 },
   { tier_id: 'tier_basic', name: 'Basic', level: 1, max: null, presale: null }, // exercises bridge default
 ];
 const MEMBERS = [
+  { id: 'CaratArmyStay', email: 'bts_army@gmail.com', status: 'ACTIVE', tier: 'tier_army', since: '2021-03-15T00:00:00.000Z', renews: '2027-03-15T00:00:00.000Z', name: 'Yoongi Min' },
   { id: 'mem_9f3', email: 'fan@example.com', status: 'ACTIVE', tier: 'tier_gold', since: '2021-03-14T00:00:00.000Z', renews: '2027-03-14T00:00:00.000Z', name: 'Ada Lovelace' },
   { id: 'mem_p01', email: 'platinum@example.com', status: 'ACTIVE', tier: 'tier_platinum', since: '2018-06-01T00:00:00.000Z', renews: '2027-06-01T00:00:00.000Z', name: 'Grace Hopper' },
   { id: 'mem_s22', email: 'silver@example.com', status: 'ACTIVE', tier: 'tier_silver', since: '2024-01-20T00:00:00.000Z', renews: '2026-12-20T00:00:00.000Z', name: 'Alan Turing' },
@@ -212,6 +214,7 @@ export function seedDatabase(db: Database.Database): Record<string, number> {
   db.transaction(() => {
     seedMembership(db);
     seedVendor(db);
+    seedTourEvents(db, SEEDED_AT); // NEW: events for the Weverse tour venues
   })();
   const tables = ['membership_tiers', 'members', 'venues', 'events', 'price_levels', 'seats', 'carts', 'orders', 'tickets'];
   return Object.fromEntries(

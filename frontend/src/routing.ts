@@ -5,3 +5,8 @@
 export interface PageProps {
   params: URLSearchParams;
 }
+
+/** Programmatic navigation; App's hashchange listener picks it up. */
+export function navigate(hash: string): void {
+  window.location.hash = hash.replace(/^#/, "");
+}

@@ -1,4 +1,4 @@
-import { defineConfig, type HtmlTagDescriptor, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type HtmlTagDescriptor, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
@@ -7,7 +7,14 @@ import siteConfiguration from './site.json'
 
 // Vite config — https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // .figma/make/deploy-preview passes `--mode development` for cached-preview builds.
+  const env = loadEnv(mode, process.cwd(), ""); // "" = load all vars, not just VITE_*
+  const bridgeProxy = {
+    "/bridge": {
+      target: env.BRIDGE_URL || "http://localhost:3000",
+      changeOrigin: true,
+      rewrite: (path: string) => path.replace(/^\/bridge/, ""),
+    },
+  };
   const emitSourcemaps = mode === 'development'
 
   return {
@@ -34,10 +41,15 @@ export default defineConfig(({ mode }) => {
       port: parseInt(process.env.PORT || '8443'),
       strictPort: true,
       watch: { ignored: ['**/.figma/**'] },
+      proxy: bridgeProxy,
     },
     preview: {
       host: '0.0.0.0',
       port: parseInt(process.env.PORT || '8443'),
+      proxy: bridgeProxy,
+    },
+    define: {
+      __EMAIL_ADDRESS__: JSON.stringify(env.EMAIL_ADDRESS ?? ""),
     },
   }
 })
@@ -69,7 +81,7 @@ type FigmaSiteConfiguration = {
   }
 }
 
-/** Applies /.figma/make/site.json to the generated document shell. */
+/** Applies /site.json to the generated document shell. */
 function figmaSiteConfiguration(config: FigmaSiteConfiguration): Plugin {
   function sanitizeHtmlValue(value: string | undefined): string {
     return value?.replace(/[^a-zA-Z0-9_-]/g, '') || ''

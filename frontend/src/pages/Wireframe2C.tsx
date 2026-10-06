@@ -1,6 +1,9 @@
 import WeverseCommunityLayout from "../components/WeverseCommunityLayout";
 import { findVenue } from "../data/tourVenues";
 import type { PageProps } from "../routing";
+import BridgeErrorNote from "../components/BridgeErrorNote";
+import { lockSelectedSeats } from "../api/purchaseFlow";
+import { useBridgeAction } from "../api/useBridgeAction";
 
 /* Minimal stadium SVG placeholder */
 function StadiumMap() {
@@ -45,6 +48,8 @@ function StadiumMap() {
 export default function Wireframe2C({ params }: PageProps) {
   // Venue chosen on 2B — each "Presale Active →" button links to #/2c?venue=<id>
   const venue = findVenue(params.get("venue"));
+  const { pendingKey, error, run } = useBridgeAction();
+  const nextHref = `#/2d?venue=${venue.id}`;
 
   return (
     <WeverseCommunityLayout>
@@ -139,9 +144,14 @@ export default function Wireframe2C({ params }: PageProps) {
               </a>
             ))}
 
-            {/* Links to 2D — checkout */}
+            {/* POST /carts/lock for Floor A1 · Row A · 11–12, then on to 2D — checkout */}
             <a
-              href={`#/2d?venue=${venue.id}`}
+              href={nextHref}
+              onClick={(e) => {
+                e.preventDefault();
+                void run("lock", () => lockSelectedSeats(venue.id), nextHref);
+              }}
+              aria-busy={pendingKey === "lock"}
               style={{
                 background: "var(--accent)",
                 color: "#fff",
@@ -155,11 +165,13 @@ export default function Wireframe2C({ params }: PageProps) {
                 alignItems: "center",
                 gap: 8,
                 textDecoration: "none",
-                cursor: "pointer",
+                cursor: pendingKey ? "wait" : "pointer",
+                opacity: pendingKey ? 0.7 : 1,
               }}
             >
-              🔒 Reserve &amp; Lock Seats (2)
+              🔒 {pendingKey === "lock" ? "Locking seats…" : "Reserve & Lock Seats (2)"}
             </a>
+            <BridgeErrorNote message={error} />
           </div>
         </div>
       </div>

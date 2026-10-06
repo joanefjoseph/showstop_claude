@@ -16,6 +16,7 @@ export async function verifyByEmail(email: string): Promise<MembershipVerificati
   return {
     verified: true,
     membershipId: m.membershipId,
+    displayName: m.displayName,
     status: m.status,
     tier: m.tier,
     memberSince: m.memberSince,

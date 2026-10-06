@@ -33,6 +33,7 @@ export interface MembershipVerificationResponse {
   /** True only when the member may proceed to lock seats. */
   eligibleToPurchase: boolean;
   reason?: string;
+  displayName?: string;
 }
 export interface SeatLockResponse {
   cartId: string;

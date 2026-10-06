@@ -1,10 +1,27 @@
 import WeverseCommunityLayout from "../components/WeverseCommunityLayout";
 import { findVenue } from "../data/tourVenues";
 import type { PageProps } from "../routing";
+import { useEffect, useState } from "react";
+import BridgeErrorNote from "../components/BridgeErrorNote";
+import { fetchMobileTicket } from "../api/purchaseFlow";
+import { describeError } from "../api/bridgeClient";
 
 export default function Wireframe2E({ params }: PageProps) {
   // Venue passed through from 2D (#/2e?venue=<id>); defaults to New York / MetLife Stadium
   const venue = findVenue(params.get("venue"));
+  // GET /tickets/:ticketId — result not rendered yet (barcode below is still hard-coded)
+  const [ticketError, setTicketError] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetchMobileTicket()
+      .then((t) => {
+        if (!cancelled) console.info("[2E] mobile ticket", t.ticketId, t.barcode);
+      })
+      .catch((err) => {
+        if (!cancelled) setTicketError(describeError(err));
+      });
+    return () => { cancelled = true; };
+  }, []);
   return (
     <WeverseCommunityLayout>
       <div style={{ padding: "14px 16px", background: "#fff" }}>
@@ -126,6 +143,7 @@ export default function Wireframe2E({ params }: PageProps) {
             >
               🔵 Blue Bar Rotating (Ticketmaster SafeTix™) — Updates every 15s
             </div>
+            <BridgeErrorNote message={ticketError} />
 
             <div
               className="font-mono-display"

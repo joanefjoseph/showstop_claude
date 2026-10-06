@@ -1,10 +1,15 @@
 import WeverseCommunityLayout from "../components/WeverseCommunityLayout";
 import { findVenue } from "../data/tourVenues";
 import type { PageProps } from "../routing";
+import BridgeErrorNote from "../components/BridgeErrorNote";
+import { completePurchase } from "../api/purchaseFlow";
+import { useBridgeAction } from "../api/useBridgeAction";
 
 export default function Wireframe2D({ params }: PageProps) {
   // Venue passed through from 2C (#/2d?venue=<id>); defaults to New York / MetLife Stadium
   const venue = findVenue(params.get("venue"));
+  const { pendingKey, error, run } = useBridgeAction();
+  const nextHref = `#/2e?venue=${venue.id}`;
   return (
     <WeverseCommunityLayout>
       <div
@@ -114,9 +119,14 @@ export default function Wireframe2D({ params }: PageProps) {
             CVC: •••
           </span>
         </div>
-        {/* Links to 2E – wallet */}
+        {/* PUT /carts/:id/billing → PUT /carts/:id/commit, then on to 2E — wallet */}
         <a
-          href={`#/2e?venue=${venue.id}`}
+          href={nextHref}
+          onClick={(e) => {
+            e.preventDefault();
+            void run("purchase", completePurchase, nextHref);
+          }}
+          aria-busy={pendingKey === "purchase"}
           style={{
             background: "var(--accent)",
             color: "#fff",
@@ -128,11 +138,13 @@ export default function Wireframe2D({ params }: PageProps) {
             textAlign: "center",
             display: "block",
             textDecoration: "none",
-            cursor: "pointer",
+            cursor: pendingKey ? "wait" : "pointer",
+            opacity: pendingKey ? 0.7 : 1,
           }}
         >
-           💳 Complete Purchase & Issue Tickets
+          💳 {pendingKey === "purchase" ? "Processing payment…" : "Complete Purchase & Issue Tickets"}
         </a>
+        <BridgeErrorNote message={error} />
         <div
           className="font-mono-display"
           style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 8, textAlign: "center" }}
