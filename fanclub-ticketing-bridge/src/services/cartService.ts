@@ -18,6 +18,11 @@ export async function lockSeats(member: MembershipRecord, input: SeatLockInput):
       `${member.tier.name} members may hold at most ${maxSeats} seats per order`,
       { requested: input.seatIds.length, max: maxSeats });
   }
+  // NEW: presale inventory is only available to tiers with presale access
+  if (member.tier.presaleAccess !== true) {
+    throw new AppError(403, 'PRESALE_ACCESS_REQUIRED',
+      `${member.tier.name} members do not have presale access`);
+  }
   const cart = await ticketVendorClient.createCart(
     {
       eventId: input.eventId,

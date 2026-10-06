@@ -1,5 +1,6 @@
 import { useEffect, useState, type ComponentType } from "react";
 import type { PageProps } from "./routing";
+import PresaleGate from "./components/PresaleGate";
 import Wireframe2A from "./pages/Wireframe2A";
 import Wireframe2B from "./pages/Wireframe2B";
 import Wireframe2C from "./pages/Wireframe2C";
@@ -10,14 +11,16 @@ interface Page {
   /** URL hash, e.g. http://localhost:8443/#/2b */
   id: string;
   Component: ComponentType<PageProps>;
+  /** Only members whose tier includes presale access may open this page */
+  requiresPresale?: boolean;
 }
 
 const PAGES: Page[] = [
-  { id: "2a", Component: Wireframe2A }, // Weverse notice (BTS community → notice)
-  { id: "2b", Component: Wireframe2B }, // Tickets tab: tour dates
-  { id: "2c", Component: Wireframe2C }, // Tickets tab: seat selection (?venue=<id>)
-  { id: "2d", Component: Wireframe2D }, // Tickets tab: checkout
-  { id: "2e", Component: Wireframe2E }, // Tickets tab: wallet
+  { id: "2a", Component: Wireframe2A },                         // Weverse notice (BTS community → notice)
+  { id: "2b", Component: Wireframe2B, requiresPresale: true },  // Tickets tab: tour dates
+  { id: "2c", Component: Wireframe2C, requiresPresale: true },  // Tickets tab: seat selection (?venue=<id>)
+  { id: "2d", Component: Wireframe2D, requiresPresale: true },  // Tickets tab: checkout
+  { id: "2e", Component: Wireframe2E, requiresPresale: true },  // Tickets tab: wallet
 ];
 
 interface Route {
@@ -47,6 +50,7 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
-  const Wireframe = PAGES[route.pageIndex].Component;
-  return <Wireframe params={route.params} />;
+  const { Component: Wireframe, requiresPresale } = PAGES[route.pageIndex];
+  const page = <Wireframe params={route.params} />;
+  return requiresPresale ? <PresaleGate>{page}</PresaleGate> : page;
 }

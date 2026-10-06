@@ -45,19 +45,38 @@ export async function verifyMembership(): Promise<MemberInfo> {
   return member;
 }
 
+/** Presale eligible = tier includes presale access AND the membership is ACTIVE. */
+export function hasPresaleAccess(m: MemberInfo): boolean {
+  return m.presaleAccess === true && m.eligibleToPurchase;
+}
+
+/** Cached member if it's for the configured email and has all current fields; otherwise re-verify. */
 async function currentMember(): Promise<MemberInfo> {
   const cached = getSession().member;
-  if (cached && cached.email === configuredEmail()) return cached;
+  if (
+    cached &&
+    cached.email === configuredEmail() &&
+    typeof cached.presaleAccess === "boolean" // entries cached before presaleAccess existed get refreshed
+  ) {
+    return cached;
+  }
   return verifyMembership();
 }
 
-async function eligibleMember(): Promise<MemberInfo> {
+/** Throws unless the member may use the presale flow. Used by the route guard and every purchase action. */
+export async function requirePresaleMember(): Promise<MemberInfo> {
   const member = await currentMember();
   if (!member.eligibleToPurchase) {
     throw new Error(member.reason ?? "This membership is not eligible to purchase tickets");
   }
+  if (!member.presaleAccess) {
+    throw new Error(`${member.tierName} tier does not include presale access`);
+  }
   return member;
 }
+
+/** Kept so existing calls in lockSeats / completePurchase need no changes. */
+const eligibleMember = requirePresaleMember;
 
 /* ───────────── 2B / 2C: live availability ───────────── */
 
