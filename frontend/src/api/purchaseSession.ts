@@ -10,9 +10,22 @@ export interface MemberInfo {
   eligibleToPurchase: boolean;
   reason?: string;
 }
+export interface LockedSeat {
+  seatId: string;
+  section: string;
+  row: string;
+  seatNumber: string;
+  total: Money;           // per seat, face + fees
+}
 export interface LockedCart {
-  cartId: string; eventId: string; membershipId: string;
-  seatIds: string[]; holdExpiresAt: string; total: Money;
+  cartId: string;
+  eventId: string;
+  membershipId: string;
+  seats: LockedSeat[];
+  subtotal: Money;
+  fees: Money;
+  total: Money;
+  holdExpiresAt: string;  // ISO — drives the 2D countdown
 }
 export interface PlacedOrder { orderId: string; eventId: string; ticketIds: string[]; total: Money }
 

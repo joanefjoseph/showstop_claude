@@ -1,11 +1,11 @@
 import { bridge, BridgeError } from "./bridgeClient";
 import type { BillingRequest, EventAvailabilityResponse, MobileTicketResponse } from "./bridgeTypes";
-import { getSession, updateSession, type LockedCart, type MemberInfo, type PlacedOrder } from "./purchaseSession";
+import {
+  getSession, updateSession,
+  type LockedCart, type MemberInfo, type PlacedOrder,
+} from "./purchaseSession";
 
-/** Seats hard-coded on page 2C: Section Floor A1, Row A, Seats 11–12. */
-export const SELECTED_SEATS = { section: "FLOOR-A1", row: "A", seatNumbers: ["11", "12"] } as const;
-
-/** Demo billing profile. The page shows "Saved Weverse Pay" selected → WALLET. Token must start with "tok_". */
+/** Demo billing profile. The page shows "Saved Weverse Pay" selected → WALLET. */
 const DEMO_ADDRESS = {
   line1: "1 MetLife Stadium Dr", city: "East Rutherford", region: "NJ", postalCode: "07073", country: "US",
 };
@@ -30,7 +30,6 @@ export async function verifyMembership(): Promise<MemberInfo> {
     }
     throw err;
   }
-  // The verify response already carries the tier object (id + name), so no second lookup is needed.
   const member: MemberInfo = {
     email,
     membershipId: res.membershipId!,
@@ -45,7 +44,6 @@ export async function verifyMembership(): Promise<MemberInfo> {
   return member;
 }
 
-/** Uses the cached member (if it matches .env), otherwise re-verifies. Handles refreshes on later pages. */
 async function currentMember(): Promise<MemberInfo> {
   const cached = getSession().member;
   if (cached && cached.email === configuredEmail()) return cached;
@@ -60,7 +58,7 @@ async function eligibleMember(): Promise<MemberInfo> {
   return member;
 }
 
-/* ───────────── 2B → 2C: availability ───────────── */
+/* ───────────── 2B / 2C: live availability ───────────── */
 
 export async function loadAvailability(eventId: string): Promise<EventAvailabilityResponse> {
   const availability = await bridge.getAvailability(eventId);
@@ -68,34 +66,20 @@ export async function loadAvailability(eventId: string): Promise<EventAvailabili
   return availability;
 }
 
-/* ───────────── 2C → 2D: lock seats ───────────── */
+/* ───────────── 2C → 2D: lock the chosen seats ───────────── */
 
-function pickSeatIds(availability: EventAvailabilityResponse): string[] {
-  const { section, row, seatNumbers } = SELECTED_SEATS;
-  const sec = availability.sections.find((s) => s.section === section);
-  if (!sec) throw new Error(`Section ${section} has no seats left for ${availability.eventName}`);
-
-  const wanted = sec.seats.filter((s) => s.row === row && (seatNumbers as readonly string[]).includes(s.seatNumber));
-  if (wanted.length === seatNumbers.length) return wanted.map((s) => s.seatId);
-
-  // A11/A12 already sold or held (e.g. a previous demo run) → take the first free seats in the same section.
-  if (sec.seats.length < seatNumbers.length) {
-    throw new Error(`Only ${sec.seats.length} seat(s) left in ${section} for ${availability.eventName}`);
-  }
-  const fallback = sec.seats.slice(0, seatNumbers.length);
-  console.warn(
-    `[lock] ${row}${seatNumbers.join(", " + row)} unavailable; locking ${fallback.map((s) => s.row + s.seatNumber).join(", ")} instead`,
-  );
-  return fallback.map((s) => s.seatId);
-}
-
-export async function lockSelectedSeats(eventId: string): Promise<LockedCart> {
+export async function lockSeats(eventId: string, seatIds: string[]): Promise<LockedCart> {
   const member = await eligibleMember();
 
-  // Re-use a still-valid hold (e.g. user went back to 2C and clicked again)
+  // Re-use the current hold if it's the same seats and still has time left
   const existing = getSession().cart;
+  const sameSeats =
+    !!existing &&
+    existing.seats.length === seatIds.length &&
+    seatIds.every((id) => existing.seats.some((s) => s.seatId === id));
   if (
     existing &&
+    sameSeats &&
     existing.eventId === eventId &&
     existing.membershipId === member.membershipId &&
     Date.parse(existing.holdExpiresAt) - Date.now() > 30_000
@@ -103,26 +87,18 @@ export async function lockSelectedSeats(eventId: string): Promise<LockedCart> {
     return existing;
   }
 
-  let availability = getSession().availability;
-  if (!availability || availability.eventId !== eventId) availability = await loadAvailability(eventId);
-
-  let lock;
-  try {
-    lock = await bridge.lockSeats(member.membershipId, eventId, pickSeatIds(availability));
-  } catch (err) {
-    if (!(err instanceof BridgeError && err.status === 409)) throw err;
-    // Inventory changed since 2B → refresh once and retry
-    availability = await loadAvailability(eventId);
-    lock = await bridge.lockSeats(member.membershipId, eventId, pickSeatIds(availability));
-  }
-
+  const lock = await bridge.lockSeats(member.membershipId, eventId, seatIds);
   const cart: LockedCart = {
     cartId: lock.cartId,
     eventId: lock.eventId,
     membershipId: member.membershipId,
-    seatIds: lock.seats.map((s) => s.seatId),
-    holdExpiresAt: lock.holdExpiresAt,
+    seats: lock.seats.map((s) => ({
+      seatId: s.seatId, section: s.section, row: s.row, seatNumber: s.seatNumber, total: s.total,
+    })),
+    subtotal: lock.totals.subtotal,
+    fees: lock.totals.fees,
     total: lock.totals.total,
+    holdExpiresAt: lock.holdExpiresAt,
   };
   updateSession({ cart, order: undefined });
   return cart;
@@ -149,7 +125,6 @@ export async function completePurchase(): Promise<PlacedOrder> {
   }
 
   await bridge.attachBilling(cart.cartId, buildBilling(member));
-  // Deterministic key → a double-click / retry replays the same order instead of buying twice
   const res = await bridge.commitCart(cart.cartId, `weverse-${cart.cartId}`);
 
   const order: PlacedOrder = {

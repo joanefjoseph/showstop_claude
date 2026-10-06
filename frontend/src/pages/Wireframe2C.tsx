@@ -1,11 +1,16 @@
+import { useEffect, useMemo, useState } from "react";
 import WeverseCommunityLayout from "../components/WeverseCommunityLayout";
+import BridgeErrorNote from "../components/BridgeErrorNote";
 import { findVenue } from "../data/tourVenues";
 import type { PageProps } from "../routing";
-import BridgeErrorNote from "../components/BridgeErrorNote";
-import { lockSelectedSeats } from "../api/purchaseFlow";
+import { loadAvailability, lockSeats } from "../api/purchaseFlow";
+import { BridgeError, describeError } from "../api/bridgeClient";
+import { buildSeatOptions, optionTitle } from "../api/seatOptions";
+import { getSession } from "../api/purchaseSession";
 import { useBridgeAction } from "../api/useBridgeAction";
+import type { EventAvailabilityResponse } from "../api/bridgeTypes";
 
-/* Minimal stadium SVG placeholder */
+/* Minimal stadium SVG placeholder (decorative; unchanged) */
 function StadiumMap() {
   return (
     <svg
@@ -15,19 +20,13 @@ function StadiumMap() {
       xmlns="http://www.w3.org/2000/svg"
     >
       <rect width="200" height="130" fill="#f8f8f5" />
-      {/* outer oval */}
       <ellipse cx="100" cy="65" rx="90" ry="55" stroke="#d0d0c8" strokeWidth="1" fill="#f0f0ec" />
-      {/* mid bowl */}
       <ellipse cx="100" cy="65" rx="65" ry="38" stroke="#c0c0b8" strokeWidth="1" fill="#e8e8e2" />
-      {/* inner lower bowl */}
       <ellipse cx="100" cy="65" rx="45" ry="25" stroke="#b0b0a8" strokeWidth="1" fill="#dcdcd8" />
-      {/* stage */}
       <rect x="78" y="55" width="44" height="20" rx="1" fill="#333" stroke="#0a0a0a" strokeWidth="0.5" />
       <text x="100" y="67" textAnchor="middle" fill="#fff" fontSize="6" fontFamily="JetBrains Mono, monospace">STAGE</text>
-      {/* selected seats Floor A1 */}
       <rect x="83" y="75" width="14" height="8" rx="0.5" fill="var(--accent)" opacity="0.9" />
       <text x="90" y="81" textAnchor="middle" fill="#fff" fontSize="5" fontFamily="JetBrains Mono, monospace">FL A1</text>
-      {/* other floor sections */}
       {[["FL A2", 100], ["FL A3", 117]].map(([label, x]) => (
         <g key={label as string}>
           <rect x={Number(x) - 7} y={75} width={14} height={8} rx={0.5} fill="#c8c8c0" />
@@ -36,9 +35,7 @@ function StadiumMap() {
           </text>
         </g>
       ))}
-      {/* 100 level band label */}
       <text x="100" y="108" textAnchor="middle" fill="#999" fontSize="6" fontFamily="JetBrains Mono, monospace">100 LEVEL</text>
-      {/* legend dot */}
       <rect x="10" y="10" width="8" height="8" fill="var(--accent)" rx="0.5" />
       <text x="21" y="17" fill="var(--accent)" fontSize="6" fontFamily="JetBrains Mono, monospace">Selected</text>
     </svg>
@@ -46,14 +43,51 @@ function StadiumMap() {
 }
 
 export default function Wireframe2C({ params }: PageProps) {
-  // Venue chosen on 2B — each "Presale Active →" button links to #/2c?venue=<id>
+  // Venue chosen on 2B (#/2c?venue=<id>); defaults to New York / MetLife Stadium
   const venue = findVenue(params.get("venue"));
-  const { pendingKey, error, run } = useBridgeAction();
   const nextHref = `#/2d?venue=${venue.id}`;
+  const member = getSession().member;
+
+  const { pendingKey, error, run } = useBridgeAction();
+  const [availability, setAvailability] = useState<EventAvailabilityResponse | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // GET /events/:id/availability — live inventory for this venue's event
+  useEffect(() => {
+    let cancelled = false;
+    loadAvailability(venue.id)
+      .then((a) => { if (!cancelled) setAvailability(a); })
+      .catch((err) => { if (!cancelled) setLoadError(describeError(err)); });
+    return () => { cancelled = true; };
+  }, [venue.id]);
+
+  const options = useMemo(
+    () => (availability ? buildSeatOptions(availability) : []),
+    [availability],
+  );
+  // Default to the first option; fall back to it if the selected one disappears after a refresh
+  const selected = options.find((o) => o.id === selectedId) ?? options[0] ?? null;
+
+  const lockAction = async () => {
+    if (!selected) throw new Error("No seats are available to lock");
+    try {
+      await lockSeats(venue.id, selected.seatIds);
+    } catch (err) {
+      if (err instanceof BridgeError && err.status === 409) {
+        // Someone else took these seats — refresh the list so the user can pick again
+        setAvailability(await loadAvailability(venue.id));
+        setSelectedId(null);
+        throw new Error("Those seats were just taken — the list has been refreshed. Please pick another option.");
+      }
+      throw err;
+    }
+  };
 
   return (
     <WeverseCommunityLayout>
       <div style={{ background: "#fff" }}>
+        {/* Header */}
         <div
           style={{
             padding: "10px 16px",
@@ -67,40 +101,24 @@ export default function Wireframe2C({ params }: PageProps) {
             <div style={{ fontSize: 12, fontWeight: 700 }}>
               BTS WORLD TOUR 'ARIRANG' — {venue.city} ({venue.venue})
             </div>
-            <div
-              className="font-mono-display"
-              style={{ fontSize: 10, color: "var(--success)", marginTop: 2 }}
-            >
-              Presale Access: 🟢 UNLOCKED (ARMY Regular Tier)
+            <div className="font-mono-display" style={{ fontSize: 10, color: "var(--success)", marginTop: 2 }}>
+              Presale Access: 🟢 UNLOCKED (ARMY {member?.tierName ?? "Regular"} Tier)
             </div>
           </div>
           <div
             className="font-mono-display"
-            style={{
-              fontSize: 9,
-              color: "var(--ink-muted)",
-              border: "1px solid var(--border)",
-              padding: "3px 8px",
-            }}
+            style={{ fontSize: 9, color: "var(--ink-muted)", border: "1px solid var(--border)", padding: "3px 8px" }}
           >
             GET /events/:id/availability
           </div>
         </div>
 
-        {/* Map stacked above the inventory panel so both fit the 580px Main Content Area */}
+        {/* Map + inventory */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 0 }}>
-          {/* Stadium map — full content width */}
-          <div
-            style={{
-              borderBottom: "1px solid var(--border)",
-              padding: 24,
-              height: 380,
-            }}
-          >
+          <div style={{ borderBottom: "1px solid var(--border)", padding: 24, height: 380 }}>
             <StadiumMap />
           </div>
 
-          {/* Inventory panel (text and spacing scaled up ~1.5x to match) */}
           <div style={{ padding: 20 }}>
             <div
               className="font-mono-display"
@@ -108,48 +126,61 @@ export default function Wireframe2C({ params }: PageProps) {
             >
               Available Sections (Live Inventory)
             </div>
-            {[
-              {
-                label: "Section Floor A1 — $450",
-                sub: "2 Seats Selected [A11, A12]",
-                active: true,
-              },
-              { label: "Section 102 (Lower Bowl) — $220", sub: null, active: false },
-              { label: "Section 204 (Club) — $150", sub: null, active: false },
-            ].map((s) => (
-              /* Dead link: looks clickable (pointer cursor); the click is swallowed by the layout */
-              <a
-                key={s.label}
-                href="#"
-                style={{
-                  display: "block",
-                  border: `1px solid ${s.active ? "var(--accent)" : "var(--border)"}`,
-                  background: s.active ? "#f0f5ff" : "#fff",
-                  padding: "12px 16px",
-                  marginBottom: 10,
-                  borderRadius: 1,
-                }}
-              >
-                <div className="font-mono-display" style={{ fontSize: 15, fontWeight: s.active ? 600 : 400 }}>
-                  {s.label}
-                </div>
-                {s.sub && (
-                  <div
-                    className="font-mono-display"
-                    style={{ fontSize: 14, color: "var(--accent)", marginTop: 4 }}
-                  >
-                    {s.sub}
-                  </div>
-                )}
-              </a>
-            ))}
 
-            {/* POST /carts/lock for Floor A1 · Row A · 11–12, then on to 2D — checkout */}
+            {loadError && <BridgeErrorNote message={loadError} />}
+            {!availability && !loadError && (
+              <div className="font-mono-display" style={{ fontSize: 11, color: "var(--ink-muted)" }}>
+                Loading live inventory…
+              </div>
+            )}
+            {availability && options.length === 0 && (
+              <div className="font-mono-display" style={{ fontSize: 11, color: "var(--ink-muted)" }}>
+                No adjacent seat pairs are available for this event.
+              </div>
+            )}
+
+            {options.map((o) => {
+              const active = o.id === selected?.id;
+              return (
+                <button
+                  key={o.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setSelectedId(o.id)}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left",
+                    border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                    background: active ? "#f0f5ff" : "#fff",
+                    padding: "12px 16px",
+                    marginBottom: 10,
+                    borderRadius: 1,
+                    cursor: "pointer",
+                  }}
+                >
+                  <div className="font-mono-display" style={{ fontSize: 15, fontWeight: active ? 600 : 400 }}>
+                    {optionTitle(o)}
+                  </div>
+                  {active && (
+                    <div
+                      className="font-mono-display"
+                      style={{ fontSize: 14, color: "var(--accent)", marginTop: 4 }}
+                    >
+                      {o.seatLabels.length} seats selected [{o.seatLabels.join(", ")}]
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+
+            {/* POST /carts/lock for the selected pair, then on to 2D — checkout */}
             <a
               href={nextHref}
+              aria-disabled={!selected}
               onClick={(e) => {
                 e.preventDefault();
-                void run("lock", () => lockSelectedSeats(venue.id), nextHref);
+                if (selected) void run("lock", lockAction, nextHref);
               }}
               aria-busy={pendingKey === "lock"}
               style={{
@@ -165,11 +196,14 @@ export default function Wireframe2C({ params }: PageProps) {
                 alignItems: "center",
                 gap: 8,
                 textDecoration: "none",
-                cursor: pendingKey ? "wait" : "pointer",
-                opacity: pendingKey ? 0.7 : 1,
+                cursor: selected && !pendingKey ? "pointer" : "not-allowed",
+                opacity: !selected || pendingKey ? 0.6 : 1,
               }}
             >
-              🔒 {pendingKey === "lock" ? "Locking seats…" : "Reserve & Lock Seats (2)"}
+              🔒{" "}
+              {pendingKey === "lock"
+                ? "Locking seats…"
+                : `Reserve & Lock Seats (${selected?.seatIds.length ?? 0})`}
             </a>
             <BridgeErrorNote message={error} />
           </div>

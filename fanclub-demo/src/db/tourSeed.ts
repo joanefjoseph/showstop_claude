@@ -19,9 +19,9 @@ const TOUR_VENUES = [
 
 /** Mirrors the sections hard-coded on page 2C. Floor A1 = $400 + $50 fees → 2 seats = $900 (matches 2D). */
 const TOUR_SECTIONS = [
-  { section: 'FLOOR-A1', level: 'floor', name: 'Floor A1',   face: 400, fees: 50, rows: ['A', 'B'],           seatsPerRow: 20 },
-  { section: '102',      level: 'lower', name: 'Lower Bowl', face: 200, fees: 20, rows: ['A', 'B', 'C', 'D'], seatsPerRow: 12 },
-  { section: '204',      level: 'club',  name: 'Club',       face: 135, fees: 15, rows: ['A', 'B', 'C'],      seatsPerRow: 10 },
+  { section: 'Floor A1',   level: 'floor', name: 'Floor A1',   face: 400, fees: 50, rows: ['A', 'B'],           seatsPerRow: 20 },
+  { section: '102',        level: 'lower', name: 'Lower Bowl', face: 200, fees: 20, rows: ['A', 'B', 'C', 'D'], seatsPerRow: 12 },
+  { section: '204',        level: 'club',  name: 'Club',       face: 135, fees: 15, rows: ['A', 'B', 'C'],      seatsPerRow: 10 },
 ] as const;
 
 const cents = (amount: number) => Math.round(amount * 100);
@@ -38,6 +38,7 @@ export function seedTourEvents(db: Database.Database, seededAt: string): void {
     `INSERT INTO seats (seat_id, event_id, section, row_label, seat_number, price_level_id, status, attributes, general_admission)
      VALUES (?, ?, ?, ?, ?, ?, 'AVAILABLE', ?, 0)`,
   );
+  const slug = (s: string) => s.replace(/\s+/g, '-');
 
   for (const v of TOUR_VENUES) {
     const venueId = `ven_${v.id}`;
@@ -51,7 +52,7 @@ export function seedTourEvents(db: Database.Database, seededAt: string): void {
         for (let n = 1; n <= s.seatsPerRow; n++) {
           const attrs = n === 1 || n === s.seatsPerRow ? JSON.stringify(['AISLE']) : null;
           // seat_id is a global PK, so it must include the event id
-          insSeat.run(`s_${v.id}_${s.section}_${row}_${n}`, v.id, s.section, row, String(n), priceLevelId, attrs);
+          insSeat.run(`s_${v.id}_${slug(s.section)}_${row}_${n}`, v.id, s.section, row, String(n), priceLevelId, attrs);
         }
       }
     }

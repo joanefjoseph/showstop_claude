@@ -1,33 +1,55 @@
 import WeverseCommunityLayout from "../components/WeverseCommunityLayout";
+import BridgeErrorNote from "../components/BridgeErrorNote";
 import { findVenue } from "../data/tourVenues";
 import type { PageProps } from "../routing";
-import BridgeErrorNote from "../components/BridgeErrorNote";
 import { completePurchase } from "../api/purchaseFlow";
+import { getSession } from "../api/purchaseSession";
 import { useBridgeAction } from "../api/useBridgeAction";
+import { useCountdown, formatMMSS } from "../api/useCountdown";
+import { formatMoney } from "../api/format";
 
 export default function Wireframe2D({ params }: PageProps) {
   // Venue passed through from 2C (#/2d?venue=<id>); defaults to New York / MetLife Stadium
   const venue = findVenue(params.get("venue"));
+  const { member, cart } = getSession();
   const { pendingKey, error, run } = useBridgeAction();
+  const remaining = useCountdown(cart?.holdExpiresAt);
   const nextHref = `#/2e?venue=${venue.id}`;
+
+  const seatsLabel =
+    cart && cart.seats.length
+      ? `${cart.seats[0].section}, Row ${cart.seats[0].row}, Seats ${cart.seats.map((s) => s.seatNumber).join(", ")}`
+      : "No seats locked";
+  const totalLabel = cart
+    ? `${formatMoney(cart.total)} ${cart.total.currency} (incl. taxes & fees)`
+    : "—";
+  const fanLabel = member ? `${member.email} (Verified ${member.tierName})` : "Not verified";
+
+  const summaryRows: Array<[string, string]> = [
+    ["Seats", seatsLabel],
+    ["Fan Account", fanLabel],
+    ["Total", totalLabel],
+    ["Protection", "Weverse Fan Auth + Show Stop"],
+  ];
+
+  const holdText =
+    remaining === null
+      ? "Reservation: no seats locked"
+      : remaining === 0
+        ? "Reservation expired — reserve seats again"
+        : `Reservation Held: ${formatMMSS(remaining)}`;
+
   return (
     <WeverseCommunityLayout>
-      <div
-        style={{
-          background: "#fff",
-          padding: "8px 16px",
-          display: "flex",
-          justifyContent: "right",
-          alignItems: "center",
-        }}
-      >
+      {/* Live hold countdown */}
+      <div style={{ background: "#fff", padding: "8px 16px", display: "flex", justifyContent: "right", alignItems: "center" }}>
         <div
           className="font-mono-display"
           style={{
             fontSize: 11,
-            color: "var(--warn)",
+            color: remaining === 0 ? "#b3261e" : "var(--warn)",
             background: "rgba(255,149,0,0.15)",
-            border: "1px solid var(--warn)",
+            border: `1px solid ${remaining === 0 ? "#b3261e" : "var(--warn)"}`,
             padding: "3px 10px",
             borderRadius: 1,
             display: "flex",
@@ -35,7 +57,7 @@ export default function Wireframe2D({ params }: PageProps) {
             gap: 6,
           }}
         >
-          ⏱ Reservation Held: 04:42
+          ⏱ {holdText}
         </div>
       </div>
 
@@ -44,20 +66,8 @@ export default function Wireframe2D({ params }: PageProps) {
           Order Summary: BTS WORLD TOUR ({venue.venue})
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 8,
-            marginBottom: 14,
-          }}
-        >
-          {[
-            ["Seats", "Floor A1, Row A, Seats 11–12"],
-            ["Fan Account", "fan@weverse.io (Verified ARMY)"],
-            ["Total", "$900.00 USD (incl. taxes & fees)"],
-            ["Protection", "Weverse Fan Auth + Show Stop"],
-          ].map(([k, v]) => (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
+          {summaryRows.map(([k, v]) => (
             <div key={k} style={{ borderBottom: "1px solid var(--border)", paddingBottom: 6 }}>
               <div className="font-mono-display" style={{ fontSize: 9, color: "var(--ink-muted)", marginBottom: 2 }}>
                 {k}
@@ -77,7 +87,6 @@ export default function Wireframe2D({ params }: PageProps) {
             { label: "● Saved Weverse Pay / Apple Pay / Google Pay", active: true },
             { label: "○ Credit / Debit Card", active: false },
           ].map((opt) => (
-            /* Dead link: looks clickable (pointer cursor); the click is swallowed by the layout */
             <a
               key={opt.label}
               href="#"
@@ -96,7 +105,7 @@ export default function Wireframe2D({ params }: PageProps) {
           ))}
         </div>
 
-        {/* Card input row */}
+        {/* Card input row (static, unused by the demo billing) */}
         <div
           style={{
             border: "1px solid var(--border)",
@@ -119,6 +128,7 @@ export default function Wireframe2D({ params }: PageProps) {
             CVC: •••
           </span>
         </div>
+
         {/* PUT /carts/:id/billing → PUT /carts/:id/commit, then on to 2E — wallet */}
         <a
           href={nextHref}
@@ -145,6 +155,7 @@ export default function Wireframe2D({ params }: PageProps) {
           💳 {pendingKey === "purchase" ? "Processing payment…" : "Complete Purchase & Issue Tickets"}
         </a>
         <BridgeErrorNote message={error} />
+
         <div
           className="font-mono-display"
           style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 8, textAlign: "center" }}
