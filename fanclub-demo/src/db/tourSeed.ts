@@ -41,20 +41,20 @@ const BTS_STOPS: readonly TourStop[] = [
 /* Must match the Epik High frontend's src/data/tourVenues.ts. Start times assume
    8 PM local (daylight time — all dates are before DST ends on Nov 1, 2026), stored in UTC. */
 const EPIK_HIGH_STOPS: readonly TourStop[] = [
-  { id: 'new-york',       city: 'New York',    country: 'US', venue: 'Venue TBA', startsAt: '2026-10-01T00:00:00.000Z' }, // Sept. 30
-  { id: 'boston',         city: 'Boston',      country: 'US', venue: 'Venue TBA', startsAt: '2026-10-02T00:00:00.000Z' }, // Oct. 1
-  { id: 'toronto',        city: 'Toronto',     country: 'CA', venue: 'Venue TBA', startsAt: '2026-10-05T00:00:00.000Z' }, // Oct. 4
-  { id: 'chicago',        city: 'Chicago',     country: 'US', venue: 'Venue TBA', startsAt: '2026-10-08T01:00:00.000Z' }, // Oct. 7
-  { id: 'washington-dc',  city: 'Washington',  country: 'US', venue: 'Venue TBA', startsAt: '2026-10-11T00:00:00.000Z' }, // Oct. 10
-  { id: 'atlanta',        city: 'Atlanta',     country: 'US', venue: 'Venue TBA', startsAt: '2026-10-12T00:00:00.000Z' }, // Oct. 11
-  { id: 'dallas',         city: 'Dallas',      country: 'US', venue: 'Venue TBA', startsAt: '2026-10-14T01:00:00.000Z' }, // Oct. 13
-  { id: 'los-angeles',    city: 'Los Angeles', country: 'US', venue: 'Venue TBA', startsAt: '2026-10-16T03:00:00.000Z' }, // Oct. 15
-  { id: 'oakland',        city: 'Oakland',     country: 'US', venue: 'Venue TBA', startsAt: '2026-10-19T03:00:00.000Z' }, // Oct. 18
-  { id: 'vancouver',      city: 'Vancouver',   country: 'CA', venue: 'Venue TBA', startsAt: '2026-10-21T03:00:00.000Z' }, // Oct. 20
-  { id: 'seattle-oct-22', city: 'Seattle',     country: 'US', venue: 'Venue TBA', startsAt: '2026-10-23T03:00:00.000Z' }, // Oct. 22
-  { id: 'seattle-oct-25', city: 'Seattle',     country: 'US', venue: 'Venue TBA', startsAt: '2026-10-26T03:00:00.000Z' }, // Oct. 25
-  { id: 'las-vegas',      city: 'Las Vegas',   country: 'US', venue: 'Venue TBA', startsAt: '2026-10-28T03:00:00.000Z' }, // Oct. 27
-  { id: 'san-diego',      city: 'San Diego',   country: 'US', venue: 'Venue TBA', startsAt: '2026-10-30T03:00:00.000Z' }, // Oct. 29
+  { id: 'new-york',       city: 'New York',    country: 'US', venue: 'Terminal 5', startsAt: '2026-10-01T00:00:00.000Z' }, // Sept. 30
+  { id: 'boston',         city: 'Boston',      country: 'US', venue: 'Big Night Live', startsAt: '2026-10-02T00:00:00.000Z' }, // Oct. 1
+  { id: 'toronto',        city: 'Toronto',     country: 'CA', venue: 'HISTORY', startsAt: '2026-10-05T00:00:00.000Z' }, // Oct. 4
+  { id: 'chicago',        city: 'Chicago',     country: 'US', venue: 'House of Blues', startsAt: '2026-10-08T01:00:00.000Z' }, // Oct. 7
+  { id: 'washington-dc',  city: 'Washington',  country: 'US', venue: 'The Howard Theatre', startsAt: '2026-10-11T00:00:00.000Z' }, // Oct. 10
+  { id: 'atlanta',        city: 'Atlanta',     country: 'US', venue: 'The Eastern', startsAt: '2026-10-12T00:00:00.000Z' }, // Oct. 11
+  { id: 'dallas',         city: 'Dallas',      country: 'US', venue: 'Granada Theater', startsAt: '2026-10-14T01:00:00.000Z' }, // Oct. 13
+  { id: 'los-angeles',    city: 'Los Angeles', country: 'US', venue: 'The Novo', startsAt: '2026-10-16T03:00:00.000Z' }, // Oct. 15
+  { id: 'oakland',        city: 'Oakland',     country: 'US', venue: 'Fox Theater', startsAt: '2026-10-19T03:00:00.000Z' }, // Oct. 18
+  { id: 'vancouver',      city: 'Vancouver',   country: 'CA', venue: 'Orpheum Theater', startsAt: '2026-10-21T03:00:00.000Z' }, // Oct. 20
+  { id: 'seattle-oct-22', city: 'Seattle',     country: 'US', venue: 'Neptune Theatre', startsAt: '2026-10-23T03:00:00.000Z' }, // Oct. 22
+  { id: 'seattle-oct-25', city: 'Seattle',     country: 'US', venue: 'Neptune Theatre', startsAt: '2026-10-26T03:00:00.000Z' }, // Oct. 25
+  { id: 'las-vegas',      city: 'Las Vegas',   country: 'US', venue: 'House of Blues', startsAt: '2026-10-28T03:00:00.000Z' }, // Oct. 27
+  { id: 'san-diego',      city: 'San Diego',   country: 'US', venue: 'The Observatory', startsAt: '2026-10-30T03:00:00.000Z' }, // Oct. 29
 ];
 
 const TOURS: readonly Tour[] = [

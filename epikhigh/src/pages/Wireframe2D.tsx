@@ -63,7 +63,7 @@ export default function Wireframe2D({ params }: PageProps) {
 
       <div style={{ padding: "14px 16px", background: "#fff" }}>
         <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1.25, marginBottom: 12 }}>
-          Order Summary: EPIK HIGH North America Tour ({venue.venue})
+          Order Summary: EPIK HIGH North America Tour<br />({venue.venue})
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>

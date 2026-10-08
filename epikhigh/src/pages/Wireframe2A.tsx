@@ -79,7 +79,7 @@ function PreApprovedCard({ member }: { member: MemberState }) {
   // Button state
   const isLoading = member.kind === "loading";
   const buttonLabel = hasPresale
-    ? "🎫 Go to Native Tour Box Office (Tickets Tab)"
+    ? "🎫 Go to NEW Tour Box Office"
     : isLoading
       ? "Checking presale access…"
       : "Upgrade Your Membership";
