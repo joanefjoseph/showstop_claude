@@ -1,72 +1,111 @@
-import WeverseCommunityLayout from "../components/WeverseCommunityLayout";
+import { useEffect, type MouseEvent } from "react";
+import TopNav from "../components/TopNav";
 import BridgeErrorNote from "../components/BridgeErrorNote";
 import { TOUR_VENUES } from "../data/tourVenues";
 import { loadAvailability } from "../api/purchaseFlow";
 import { useBridgeAction } from "../api/useBridgeAction";
+import "../components/TourDatesLayout.css";
+
+/* The downloaded page's images/IMG_7963.PNG, copied to public/images/ (respects Vite's base URL). */
+const POSTER = `${import.meta.env.BASE_URL}images/IMG_7963.PNG`;
+
+const PAGE_TITLE = "2026 NORTH AMERICA TOUR | EPIK HIGH";
+
+/** Both buttons in a row do the same thing (load availability, then go to 2C for that stop). */
+const ROW_ACTIONS = [
+  { key: "buy", label: "Buy Tickets" },
+  { key: "vip", label: "VIP Upgrade" },
+] as const;
+
+/** "VIP PACKAGE INFO" and "Back to HQ" are dead links (href="#"). In this
+ *  hash-routed app "#" would jump to #/2a, so those clicks are swallowed. */
+function swallowDeadLinks(e: MouseEvent<HTMLDivElement>) {
+  const link = (e.target as HTMLElement).closest("a");
+  if (link?.getAttribute("href") === "#") e.preventDefault();
+}
 
 export default function Wireframe2B() {
+  // <title> of the original page; restored when navigating to another wireframe.
+  useEffect(() => {
+    const previousTitle = document.title;
+    document.title = PAGE_TITLE;
+    return () => {
+      document.title = previousTitle;
+    };
+  }, []);
+
   const { pendingKey, error, run } = useBridgeAction();
 
   return (
-    <WeverseCommunityLayout>
-      <h1 style={{ fontSize: 16, fontWeight: 700, margin: 0, marginBottom: 2 }}>
-        North American Tour Dates
-      </h1>
-      <div
-        className="font-mono-display"
-        style={{ fontSize: 11, color: "var(--ink-muted)", marginBottom: 14 }}
-      >
-        BTS WORLD TOUR 'ARIRANG'
-      </div>
+    <div className="td-page" onClick={swallowDeadLinks}>
+      <TopNav />
 
-      <div style={{ marginBottom: 4 }}>
-        <span className="font-mono-display" style={{ fontSize: 11, fontWeight: 600 }}>
-          Tour Schedule:
-        </span>
-      </div>
-      <BridgeErrorNote message={error} />
-      {TOUR_VENUES.map((v) => {
-        const href = `#/2c?venue=${v.id}`;
-        const isPending = pendingKey === v.id;
-        return (
-          <div
-            key={v.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              borderBottom: "1px solid var(--border)",
-              padding: "7px 0",
-            }}
-          >
-            <span className="font-mono-display" style={{ fontSize: 11 }}>
-              • {v.city}, {v.region} — {v.venue}
-            </span>
-            {/* GET /events/<venue id>/availability, then on to 2C — seat selection for this venue */}
-            <a
-              href={href}
-              onClick={(e) => {
-                e.preventDefault();
-                void run(v.id, () => loadAvailability(v.id), href);
-              }}
-              aria-busy={isPending}
-              className="font-mono-display"
-              style={{
-                fontSize: 10,
-                background: "#e8fff4",
-                color: "var(--success)",
-                border: "1px solid var(--success)",
-                padding: "2px 8px",
-                textDecoration: "none",
-                cursor: pendingKey ? "wait" : "pointer",
-                opacity: pendingKey && !isPending ? 0.5 : 1,
-              }}
-            >
-              {isPending ? "Checking seats…" : "Presale Active →"}
-            </a>
+      <main className="td-container">
+        <section className="page-section">
+          <div className="fluid-engine fe-main-grid">
+            {/* Main Tour Image */}
+            <div className="fe-block fe-block-image">
+              <img src={POSTER} alt="2026 North America Tour Poster" />
+            </div>
+
+            {/* VIP button ("GA ➟ VIP 2 UPGRADE" removed) */}
+            <div className="fe-block fe-block-vip">
+              <a href="#" className="sqs-block-button-element">VIP PACKAGE INFO</a>
+            </div>
+
+            {/* Tour Dates: stop info on the left, two actions on the right */}
+            <div className="fe-block fe-block-dates">
+              <BridgeErrorNote message={error} />
+              <ul className="tour-dates">
+                {TOUR_VENUES.map((v) => {
+                  // GET /events/<venue id>/availability, then on to 2C (seat selection for this stop)
+                  const href = `#/2c?venue=${v.id}`;
+                  return (
+                    <li key={v.id} className="tour-date-row">
+                      <span className="tour-date-label">
+                        {v.listName} | {v.dateLabel}
+                      </span>
+                      <div className="tour-date-actions">
+                        {ROW_ACTIONS.map((a) => {
+                          const key = `${v.id}:${a.key}`;
+                          const isPending = pendingKey === key;
+                          return (
+                            <a
+                              key={a.key}
+                              href={href}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                void run(key, () => loadAvailability(v.id), href);
+                              }}
+                              aria-busy={isPending}
+                              className="sqs-block-button-element"
+                              style={{
+                                cursor: pendingKey ? "wait" : "pointer",
+                                opacity: pendingKey && !isPending ? 0.5 : 1,
+                              }}
+                            >
+                              {isPending ? "Checking seats…" : a.label}
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           </div>
-        );
-      })}
-    </WeverseCommunityLayout>
+        </section>
+
+        {/* Footer Section */}
+        <section className="page-section footer-section">
+          <div className="fluid-engine fe-footer-grid">
+            <div className="fe-block fe-block-back">
+              <a href="#" className="sqs-block-button-element tertiary">← Back to HQ</a>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
   );
 }

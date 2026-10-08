@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import WeverseCommunityLayout from "../components/WeverseCommunityLayout";
+import TourPageLayout from "../components/TourPageLayout";
 import BridgeErrorNote from "../components/BridgeErrorNote";
 import { findVenue } from "../data/tourVenues";
 import type { PageProps } from "../routing";
@@ -64,12 +64,12 @@ export default function Wireframe2E({ params }: PageProps) {
     : venue.venue;
 
   return (
-    <WeverseCommunityLayout>
+    <TourPageLayout>
       <div style={{ padding: "14px 16px", background: "#fff" }}>
         {/* Confirmation banner — shows the ticket ID attached to the barcode */}
         <div
           style={{
-            fontSize: 12,
+            fontSize: 24,
             fontWeight: 700,
             color: "var(--success)",
             marginBottom: 12,
@@ -94,7 +94,7 @@ export default function Wireframe2E({ params }: PageProps) {
         >
           {/* Ticket header */}
           <div style={{ background: "var(--panel-dark)", padding: "12px 14px", color: "#fff" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>BTS WORLD TOUR 'ARIRANG'</div>
+            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>EPIK HIGH North America Tour '3.0'</div>
             <div className="font-mono-display" style={{ fontSize: 10, color: "rgba(255,255,255,0.6)" }}>
               {eventLine}
             </div>
@@ -195,6 +195,6 @@ export default function Wireframe2E({ params }: PageProps) {
           </div>
         </div>
       </div>
-    </WeverseCommunityLayout>
+    </TourPageLayout>
   );
 }

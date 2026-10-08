@@ -8,14 +8,14 @@ export interface TourVenue {
 }
 
 export const TOUR_VENUES: TourVenue[] = [
-  { id: "new-york", city: "New York", region: "NY", venue: "MetLife Stadium" },
-  { id: "los-angeles", city: "Los Angeles", region: "CA", venue: "SoFi Stadium" },
-  { id: "boston", city: "Boston", region: "MA", venue: "Gillette Stadium" },
-  { id: "chicago", city: "Chicago", region: "IL", venue: "Soldier Field" },
-  { id: "arlington", city: "Arlington", region: "TX", venue: "AT&T Stadium" },
-  { id: "toronto", city: "Toronto", region: "ON", venue: "Rogers Stadium" },
-  { id: "baltimore", city: "Baltimore", region: "MD", venue: "M&T Bank Stadium" },
-  { id: "las-vegas", city: "Las Vegas", region: "NV", venue: "Allegiant Stadium" },
+  { id: "metlife-stadium", city: "New York", region: "NY", venue: "MetLife Stadium" },
+  { id: "sofi-stadium", city: "Los Angeles", region: "CA", venue: "SoFi Stadium" },
+  { id: "gillette-stadium", city: "Boston", region: "MA", venue: "Gillette Stadium" },
+  { id: "soldier-field", city: "Chicago", region: "IL", venue: "Soldier Field" },
+  { id: "at-and-t-stadium", city: "Arlington", region: "TX", venue: "AT&T Stadium" },
+  { id: "rogers-stadium", city: "Toronto", region: "ON", venue: "Rogers Stadium" },
+  { id: "m-and-t-bank-stadium", city: "Baltimore", region: "MD", venue: "M&T Bank Stadium" },
+  { id: "allegiant-stadium", city: "Las Vegas", region: "NV", venue: "Allegiant Stadium" },
 ];
 
 /** Looks up a venue by id; falls back to New York (MetLife Stadium) if missing or unknown. */

@@ -3,18 +3,16 @@ import { verifyMembership } from "../api/purchaseFlow";
 import type { MemberInfo } from "../api/purchaseSession";
 import { describeError } from "../api/bridgeClient";
 import "../components/NoticeLayout.css";
+import TopNav from "../components/TopNav";
 
 /* The downloaded page's images/ folder lives in /public/images (respects Vite's base URL). */
 const IMG_BASE = `${import.meta.env.BASE_URL}images/`;
 const IMAGES = {
-  logo: `${IMG_BASE}ori.png`,
   hero: `${IMG_BASE}ori.jpg`,
   avatar: `${IMG_BASE}avatar-default-4.png`,
 };
 
 const PAGE_TITLE = "EPIK HIGH NORTH AMERICA TOUR 2026";
-
-const NAV_ITEMS = ["HOME", "CONCERT", "CHAT", "COMMUNITY", "MERCH", "MEMBERSHIP"];
 
 /* index.html lines 109–116 */
 const REACTIONS = [
@@ -40,14 +38,6 @@ const COMMENTS = [
     text: "Whoo!!! Got 2 Vip2 tickets for me and my friend it was either get me one Vip1 ticket or two Vip2 so I chose the latter!!! Can't wait for the Seattle stop!!! 😍",
   },
 ];
-
-/* index.html lines 19–20 (#schedule-icon, #notification-icon). The other six
-   <defs> icons were never referenced by the original markup, so they're omitted. */
-const SCHEDULE_ICON =
-  "M7.75 2a.75.75 0 00-1.5 0v2.25H4A1.75 1.75 0 002.25 6v14c0 .966.784 1.75 1.75 1.75h16A1.75 1.75 0 0021.75 20V6A1.75 1.75 0 0020 4.25h-2.25V2a.75.75 0 00-1.5 0v2.25h-8.5V2zM7 5.75h13a.25.25 0 01.25.25v3.25H3.75V6A.25.25 0 014 5.75h3zm-3.25 5V20c0 .138.112.25.25.25h16a.25.25 0 00.25-.25v-9.25H3.75z";
-const NOTIFICATION_ICON_BELL =
-  "M3.25 18.75H2a.75.75 0 010-1.5h1.25V10a8.75 8.75 0 0117.5 0v7.25H22a.75.75 0 010 1.5H3.25zm16-1.5V10a7.25 7.25 0 10-14.5 0v7.25h14.5z";
-const NOTIFICATION_ICON_CLAPPER = "M8 18a4 4 0 008 0h-1.5a2.5 2.5 0 01-5 0H8z";
 
 /**
  * The original page used href="javascript:void(0);" (React warns about / blocks
@@ -99,8 +89,8 @@ function PreApprovedCard({ member }: { member: MemberState }) {
     <div
       className="preapproved-card"
       style={{
-        border: "1.5px solid var(--accent)",
-        background: "linear-gradient(135deg, #f0f5ff 0%, #e8f0ff 100%)",
+        border: "1.5px solid #000",
+        background: "linear-gradient(135deg, #fafafa 0%, #ececec 100%)",
         padding: "12px 14px",
         borderRadius: 2,
         marginBottom: 12,
@@ -108,9 +98,9 @@ function PreApprovedCard({ member }: { member: MemberState }) {
     >
       <div
         className="font-mono-display"
-        style={{ fontSize: 10, fontWeight: 700, color: "var(--accent)", marginBottom: 8 }}
+        style={{ fontSize: 10, fontWeight: 700, color: "#000", marginBottom: 8 }}
       >
-        🌟 ARMY MEMBERSHIP EXCLUSIVE BENEFIT
+        🌟 HIGH SKOOL MEMBERSHIP EXCLUSIVE BENEFIT
       </div>
       <div className="font-mono-display" style={{ fontSize: 11, color: "var(--ink)", marginBottom: 4 }}>
         You are logged in as:{" "}
@@ -161,45 +151,6 @@ function PreApprovedCard({ member }: { member: MemberState }) {
       >
         {buttonLabel}
       </a>
-    </div>
-  );
-}
-
-/* index.html lines 24–64 */
-function TopNav() {
-  return (
-    <div className="top-nav">
-      <div className="nav-left">
-        <a href="#" className="logo-container">
-          <img className="logo-image" src={IMAGES.logo} alt="Epik High Logo" />
-        </a>
-      </div>
-
-      <nav className="nav-center">
-        {NAV_ITEMS.map((label) => (
-          <a key={label} href="#" className="nav-item">
-            <span>{label}</span>
-          </a>
-        ))}
-      </nav>
-
-      <div className="nav-right">
-        <a href="#" className="icon-btn">
-          <svg className="nav-icon" viewBox="0 0 24 24">
-            <path fill="currentColor" fillRule="evenodd" d={SCHEDULE_ICON} />
-          </svg>
-        </a>
-        <a href="#" className="icon-btn notification-btn">
-          <span className="notification-dot" />
-          <svg className="nav-icon" viewBox="0 0 24 24">
-            <path fill="currentColor" fillRule="evenodd" d={NOTIFICATION_ICON_BELL} />
-            <path fill="currentColor" d={NOTIFICATION_ICON_CLAPPER} />
-          </svg>
-        </a>
-        <a href="#" className="profile-btn">
-          <img src={IMAGES.avatar} alt="My Profile" className="avatar-sm" />
-        </a>
-      </div>
     </div>
   );
 }

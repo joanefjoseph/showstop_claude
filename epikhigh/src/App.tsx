@@ -16,7 +16,7 @@ interface Page {
 }
 
 const PAGES: Page[] = [
-  { id: "2a", Component: Wireframe2A },                         // Weverse notice (BTS community → notice)
+  { id: "2a", Component: Wireframe2A },                         // Tour notice
   { id: "2b", Component: Wireframe2B, requiresPresale: true },  // Tickets tab: tour dates
   { id: "2c", Component: Wireframe2C, requiresPresale: true },  // Tickets tab: seat selection (?venue=<id>)
   { id: "2d", Component: Wireframe2D, requiresPresale: true },  // Tickets tab: checkout

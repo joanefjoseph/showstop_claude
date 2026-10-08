@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import WeverseCommunityLayout from "../components/WeverseCommunityLayout";
+import TourPageLayout from "../components/TourPageLayout";
 import BridgeErrorNote from "../components/BridgeErrorNote";
 import { findVenue } from "../data/tourVenues";
 import type { PageProps } from "../routing";
@@ -85,7 +85,7 @@ export default function Wireframe2C({ params }: PageProps) {
   };
 
   return (
-    <WeverseCommunityLayout>
+    <TourPageLayout>
       <div style={{ background: "#fff" }}>
         {/* Header */}
         <div
@@ -95,19 +95,20 @@ export default function Wireframe2C({ params }: PageProps) {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            gap: 12,
           }}
         >
           <div>
-            <div style={{ fontSize: 12, fontWeight: 700 }}>
-              BTS WORLD TOUR 'ARIRANG' — {venue.city} ({venue.venue})
+            <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1.25 }}>
+              EPIK HIGH North America Tour '3.0' — {venue.city} ({venue.venue})
             </div>
             <div className="font-mono-display" style={{ fontSize: 10, color: "var(--success)", marginTop: 2 }}>
-              Presale Access: 🟢 UNLOCKED (ARMY {member?.tierName ?? "Regular"} Tier)
+              Presale Access: 🟢 UNLOCKED ({member?.tierName ?? "Regular"} Tier)
             </div>
           </div>
           <div
             className="font-mono-display"
-            style={{ fontSize: 9, color: "var(--ink-muted)", border: "1px solid var(--border)", padding: "3px 8px" }}
+            style={{ fontSize: 9, color: "var(--ink-muted)", border: "1px solid var(--border)", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}
           >
             GET /events/:id/availability
           </div>
@@ -209,6 +210,6 @@ export default function Wireframe2C({ params }: PageProps) {
           </div>
         </div>
       </div>
-    </WeverseCommunityLayout>
+    </TourPageLayout>
   );
 }

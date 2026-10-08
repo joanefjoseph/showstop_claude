@@ -1,4 +1,4 @@
-import WeverseCommunityLayout from "../components/WeverseCommunityLayout";
+import TourPageLayout from "../components/TourPageLayout";
 import BridgeErrorNote from "../components/BridgeErrorNote";
 import { findVenue } from "../data/tourVenues";
 import type { PageProps } from "../routing";
@@ -40,7 +40,7 @@ export default function Wireframe2D({ params }: PageProps) {
         : `Reservation Held: ${formatMMSS(remaining)}`;
 
   return (
-    <WeverseCommunityLayout>
+    <TourPageLayout>
       {/* Live hold countdown */}
       <div style={{ background: "#fff", padding: "8px 16px", display: "flex", justifyContent: "right", alignItems: "center" }}>
         <div
@@ -62,8 +62,8 @@ export default function Wireframe2D({ params }: PageProps) {
       </div>
 
       <div style={{ padding: "14px 16px", background: "#fff" }}>
-        <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 12 }}>
-          Order Summary: BTS WORLD TOUR ({venue.venue})
+        <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1.25, marginBottom: 12 }}>
+          Order Summary: EPIK HIGH North America Tour ({venue.venue})
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
@@ -163,6 +163,6 @@ export default function Wireframe2D({ params }: PageProps) {
           🔒 Protected by Weverse Fan Authentication & Powered by Show Stop
         </div>
       </div>
-    </WeverseCommunityLayout>
+    </TourPageLayout>
   );
 }

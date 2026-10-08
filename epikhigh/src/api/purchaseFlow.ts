@@ -127,7 +127,7 @@ export async function lockSeats(eventId: string, seatIds: string[]): Promise<Loc
 /* ───────────── 2D → 2E: billing + commit ───────────── */
 
 function buildBilling(member: MemberInfo): BillingRequest {
-  const [firstName, ...rest] = (member.displayName ?? "ARMY Member").trim().split(/\s+/);
+  const [firstName, ...rest] = (member.displayName ?? "HIGH SKOOL Member").trim().split(/\s+/);
   return {
     customer: { firstName, lastName: rest.join(" ") || "Member", email: member.email },
     address: DEMO_ADDRESS,
