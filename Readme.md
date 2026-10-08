@@ -4,9 +4,9 @@ This monorepo-style demo simulates the full concert-ticket journey: a fan verifi
 
 | Directory | Role | Default port |
 |---|---|---|
-| `fanclub-demo/` | Mock upstream services: a ticket-vendor API, a membership API, and a SQLite database that backs both | Vendor `4001`, Membership `4002` |
-| `fanclub-ticketing-bridge/` | Express API gateway that the frontend talks to. It validates requests, applies business rules, and calls the two mocks | `3000` |
-| `frontend/` | Vite + React web app that mimics the Weverse notice → tour dates → seat selection → checkout → ticket flow | Vite dev server (see `vite.config.ts`) |
+| `fanclub-demo/` | Mock upstream services: a ticket-vendor API, a membership API, and a SQLite database that backs both; API console | Vendor `3001`, Membership `3002`, Console `3004` |
+| `fanclub-ticketing-bridge/` | Express API gateway that the frontend talks to. It validates requests, applies business rules, and calls the two mocks | `3003` |
+| `frontend/` | Vite + React web app that mimics the Weverse notice → tour dates → seat selection → checkout → ticket flow | `3000` |
 
 ## Directory layout
 
@@ -24,20 +24,20 @@ The three directories must sit side by side. `fanclub-demo/src/bridgeContracts.t
 ## How the three connect
 
 ```
- Browser (frontend, Vite :port)
+ Browser (frontend, Vite :3000)
     │  fetch('/bridge/...')
     ▼
- Vite dev proxy ── rewrites /bridge → '' ──▶ Bridge (Express :3000)
+ Vite dev proxy ── rewrites /bridge → '' ──▶ Bridge (Express :3003)
                                                  │
                          ┌───────────────────────┴───────────────────────┐
                          ▼                                               ▼
-        Ticket vendor mock (:4001, /v1)                  Membership mock (:4002, /api)
+        Ticket vendor mock (:3001, /v1)                  Membership mock (:3002, /api)
                          │                                               │
                          └──────────── both read/write ──────────────────┘
                                       fanclub-demo/data/demo.db
 ```
 
-- **Frontend → Bridge.** The frontend never calls the mocks directly. Its Vite dev server proxies every `/bridge/*` request to the bridge (`BRIDGE_URL`, default `http://localhost:3000`). Because requests are same-origin, no CORS setup is needed.
+- **Frontend → Bridge.** The frontend never calls the mocks directly. Its Vite dev server proxies every `/bridge/*` request to the bridge (`BRIDGE_URL`, default `http://localhost:3003`). Because requests are same-origin, no CORS setup is needed.
 - **Bridge → mocks.** The bridge calls the ticket vendor (`TICKET_VENDOR_BASE_URL`) and the membership API (`MEMBERSHIP_BASE_URL`), using the API keys in its `.env`.
 - **Mocks → database.** `fanclub-demo` runs both mock APIs against one SQLite file (`data/demo.db`). The membership tables and the vendor tables live in the same file.
 - **Tests.** `fanclub-demo/src/e2e.ts` exercises the bridge end to end and expects it to be running.
@@ -70,8 +70,8 @@ npm run start           # equivalent to: npx tsx src/server.ts
 On startup you should see:
 
 ```
-Mock Ticket Vendor Partner API -> http://localhost:4001/v1
-Mock Membership API            -> http://localhost:4002/api
+Mock Ticket Vendor Partner API -> http://localhost:3001/v1
+Mock Membership API            -> http://localhost:3002/api
 ```
 
 Stop with `Ctrl+C`. The server closes both servers and the database cleanly.
@@ -87,15 +87,15 @@ npm run dev             # or: npm start, after a build; check your package.json
 On startup:
 
 ```
-fanclub-ticketing-bridge listening on :3000 (development)
-  ticket vendor -> http://localhost:4001/v1
-  membership    -> http://localhost:4002/api
+fanclub-ticketing-bridge listening on :3003 (development)
+    ticket vendor -> http://localhost:3001/v1
+    membership    -> http://localhost:3002/api
 ```
 
 Check it with:
 
 ```bash
-curl http://localhost:3000/health
+curl http://localhost:3003/health
 ```
 
 ### 3. `frontend` (web app)
@@ -153,7 +153,7 @@ fanclub-demo/
         └── ticketVendorApi.ts  # Ticket vendor partner API (Express app factory)
 ```
 
-### Mock ticket vendor API (`:4001`, base path `/v1`)
+### Mock ticket vendor API (`:3001`, base path `/v1`)
 
 Requires `x-api-key` and `x-partner-id` headers.
 
@@ -172,7 +172,7 @@ Behaviours worth knowing:
 - **Simulated declines.** A payment token starting with `tok_decline` returns a `FAILED` order.
 - **Rotating barcodes.** `src/services/rotatingBarcode.ts` (bridge side) derives the barcode from a per-ticket secret. The vendor stores only the secret.
 
-### Mock membership API (`:4002`, base path `/api`)
+### Mock membership API (`:3002`, base path `/api`)
 
 Requires `Authorization: Bearer <MEMBERSHIP_API_KEY>`.
 
@@ -200,8 +200,8 @@ Tour venues (`new-york`, `los-angeles`, `boston`, `chicago`, `arlington`, `toron
 ### Configuration (`.env`)
 
 ```env
-VENDOR_PORT=4001
-MEMBERSHIP_PORT=4002
+VENDOR_PORT=3001
+MEMBERSHIP_PORT=3002
 VENDOR_API_KEY=demo-vendor-key
 VENDOR_PARTNER_ID=fanclub-partner-001
 MEMBERSHIP_API_KEY=demo-membership-key
@@ -298,14 +298,14 @@ Upstream errors are mapped to bridge codes. Examples: vendor `404` becomes `NOT_
 ### Configuration (`.env`)
 
 ```env
-PORT=3000
+PORT=3003
 NODE_ENV=development
 
-TICKET_VENDOR_BASE_URL=http://localhost:4001/v1
+TICKET_VENDOR_BASE_URL=http://localhost:3001/v1
 TICKET_VENDOR_API_KEY=demo-vendor-key
 TICKET_VENDOR_PARTNER_ID=fanclub-partner-001
 
-MEMBERSHIP_BASE_URL=http://localhost:4002/api
+MEMBERSHIP_BASE_URL=http://localhost:3002/api
 MEMBERSHIP_API_KEY=demo-membership-key
 
 UPSTREAM_TIMEOUT_MS=8000
@@ -392,7 +392,7 @@ State between pages lives in `sessionStorage` under one key. A browser refresh k
 EMAIL_ADDRESS=fan@example.com
 
 # Where the dev proxy forwards /bridge/* (optional, default shown)
-BRIDGE_URL=http://localhost:3000
+BRIDGE_URL=http://localhost:3003
 ```
 
 `EMAIL_ADDRESS` has no `VITE_` prefix, so `vite.config.ts` injects it with `define` as `__EMAIL_ADDRESS__`. Restart the dev server after changing `.env`.
@@ -413,10 +413,10 @@ BRIDGE_URL=http://localhost:3000
 
 | Symptom | Likely cause |
 |---|---|
-| `Could not reach the ticketing bridge` on any page | Bridge not running on `:3000`, or `BRIDGE_URL` is wrong |
+| `Could not reach the ticketing bridge` on any page | Bridge not running on `:3003`, or `BRIDGE_URL` is wrong |
 | Bridge fails at startup with "Invalid environment configuration" | A variable in the bridge `.env` is missing or malformed. The message lists which one |
 | `502 UPSTREAM_AUTH_FAILED` | Bridge API keys or partner ID don't match the mock `.env` |
-| `ECONNREFUSED` to `:4001` or `:4002` | `fanclub-demo` isn't running |
+| `ECONNREFUSED` to `:3001` or `:3002` | `fanclub-demo` isn't running |
 | `404 EVENT_NOT_FOUND` on availability | Mock not reseeded after adding tour events. Run `npm run start:fresh` |
 | `409 SEATS_UNAVAILABLE` on lock | Those seats were sold or held earlier. Reseed, or pick another pair |
 | Page 2B redirects to 2A | The account has no presale access (Silver, Basic, or an inactive membership) |

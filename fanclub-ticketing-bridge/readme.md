@@ -10,24 +10,24 @@ npm run dev            # or: npm run build && npm start
 
 ## 1. What's available?
 ```
-curl localhost:3000/events/evt_123/availability
+curl localhost:3003/events/evt_123/availability
 ```
 ## 2. Verify the fan → get membershipId
 ```
-curl -X POST localhost:3000/membership/verify \
+curl -X POST localhost:3003/membership/verify \
   -H 'Content-Type: application/json' -d '{"email":"fan@example.com"}'
 # → { "verified": true, "membershipId": "mem_9f3", "tier": {"name":"Gold",...}, "eligibleToPurchase": true }
 ```
 ## 3. Lock seats for 5 minutes (membership header REQUIRED)
 ```
-curl -X POST localhost:3000/carts/lock \
+curl -X POST localhost:3003/carts/lock \
   -H 'Content-Type: application/json' -H 'X-Membership-Id: mem_9f3' \
   -d '{"eventId":"evt_123","seatIds":["s_101_A_7","s_101_A_8"]}'
 # → { "cartId": "cart_abc", "holdExpiresAt": "...", "holdSecondsRemaining": 299, ... }
 ```
 ## 4. Attach billing (tokenised payment only)
 ```
-curl -X PUT localhost:3000/carts/cart_abc/billing \
+curl -X PUT localhost:3003/carts/cart_abc/billing \
   -H 'Content-Type: application/json' \
   -d '{"customer":{"firstName":"Ada","lastName":"Lovelace","email":"fan@example.com"},
        "address":{"line1":"1 Main St","city":"Austin","region":"TX","postalCode":"78701","country":"US"},
@@ -35,13 +35,13 @@ curl -X PUT localhost:3000/carts/cart_abc/billing \
 ```
 ## 5. Commit → order + ticket IDs
 ```
-curl -X PUT localhost:3000/carts/cart_abc/commit -H 
+curl -X PUT localhost:3003/carts/cart_abc/commit -H
 'Idempotency-Key: order-attempt-1'
 # → { "orderId":"ord_77", "tickets":[{"ticketId":"tkt_1","mobileTicketUrl":"/tickets/tkt_1"},...] }
 ```
 ## 6. Mobile ticket with rotating barcode (poll again after `nextRotationAt`)
 ```
-curl localhost:3000/tickets/tkt_1 -H 'X-Membership-Id: mem_9f3'
+curl localhost:3003/tickets/tkt_1 -H 'X-Membership-Id: mem_9f3'
 # → { "barcode": { "format":"PDF417", "value":"tkt_1.113245678.48213377", "rotating":true,
 #                  "rotatesEverySeconds":15, "nextRotationAt":"..." }, ... }
 ```

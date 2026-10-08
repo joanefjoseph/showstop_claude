@@ -33,7 +33,7 @@ async function request<T>(method: string, path: string, o: RequestOptions = {}):
       body: o.body !== undefined ? JSON.stringify(o.body) : undefined,
     });
   } catch {
-    throw new BridgeError(0, "BRIDGE_UNREACHABLE", "Could not reach the ticketing bridge — is it running on :3000?");
+    throw new BridgeError(0, "BRIDGE_UNREACHABLE", "Could not reach the ticketing bridge — is it running on :3003?");
   }
 
   const text = await res.text();

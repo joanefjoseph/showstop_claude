@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), ""); // "" = load all vars, not just VITE_*
   const bridgeProxy = {
     "/bridge": {
-      target: env.BRIDGE_URL || "http://localhost:3000",
+      target: env.BRIDGE_URL || "http://localhost:3003",
       changeOrigin: true,
       rewrite: (path: string) => path.replace(/^\/bridge/, ""),
     },
@@ -38,14 +38,14 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: '0.0.0.0',
-      port: parseInt(process.env.PORT || '8443'),
+      port: parseInt(process.env.PORT || '3000'),
       strictPort: true,
       watch: { ignored: ['**/.figma/**'] },
       proxy: bridgeProxy,
     },
     preview: {
       host: '0.0.0.0',
-      port: parseInt(process.env.PORT || '8443'),
+      port: parseInt(process.env.PORT || '3000'),
       proxy: bridgeProxy,
     },
     define: {

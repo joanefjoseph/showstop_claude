@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { z } from 'zod';
 const envSchema = z.object({
-  PORT: z.coerce.number().int().positive().default(3000),
+  PORT: z.coerce.number().int().positive().default(3003),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   TICKET_VENDOR_BASE_URL: z.string().url(),
   TICKET_VENDOR_API_KEY: z.string().min(1),

@@ -38,7 +38,7 @@ function flash(input) {
 }
 /* ────────────────────────── session state ────────────────────────── */
 const state = {
-  bridgeUrl: 'http://localhost:3000',
+  bridgeUrl: 'http://localhost:3003',
   membershipId: '',
   cartId: '',
   selectedSeats: new Set(),

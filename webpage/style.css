@@ -1,0 +1,257 @@
+:root {
+    --bg-base: #ffffff;
+    --text-primary: #000000;
+    --text-secondary: #9B9B9B;
+    --border-color: #e5e5e5;
+    --brand-color: #000000;
+    --hover-bg: #f5f5f5;
+    --nav-height: 64px;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    padding-top: var(--nav-height); /* Offset for fixed nav */
+}
+
+/* Enforce Dead Links Globally */
+a, button, [role="button"] {
+    pointer-events: none !important;
+    cursor: default !important;
+    text-decoration: none;
+    color: inherit;
+}
+
+/* TOP NAVIGATION REPLICA */
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: var(--nav-height);
+    background-color: var(--bg-base);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 1000;
+    padding: 0 24px;
+    box-sizing: border-box;
+}
+
+.nav-left, .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+}
+
+.nav-right {
+    justify-content: flex-end;
+}
+
+.logo-image {
+    height: 32px;
+    width: auto;
+}
+
+.nav-center {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+}
+
+.nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--text-secondary);
+    gap: 4px;
+}
+
+.nav-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--text-primary);
+}
+
+.icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.notification-dot {
+    position: absolute;
+    top: -2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    background-color: red;
+    border-radius: 50%;
+}
+
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--border-color);
+    object-fit: cover;
+}
+
+/* MAIN CONTENT AREA */
+.main-container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.post-header {
+    margin-bottom: 24px;
+}
+
+.post-title {
+    font-size: 28px;
+    line-height: 1.3;
+    font-weight: bold;
+    margin: 0 0 12px 0;
+}
+
+.post-meta {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.hero-image {
+    margin: 0 0 32px 0;
+    padding: 0;
+}
+
+.hero-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    display: block;
+}
+
+.html-render a {
+    text-decoration: underline;
+    color: var(--text-primary);
+}
+
+.html-render p {
+    margin: 0 0 16px 0;
+    word-break: break-word;
+}
+
+/* REACTIONS BAR */
+.reactions-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 40px 0;
+    padding: 16px 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.reaction-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    background: var(--bg-base);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* COMMENTS SECTION */
+.comments-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.comments-header h2 {
+    font-size: 16px;
+    margin: 0;
+}
+
+.add-comment-btn {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.comment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.comment {
+    display: flex;
+    gap: 12px;
+}
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--border-color);
+    flex-shrink: 0;
+}
+
+.comment-content {
+    flex: 1;
+}
+
+.comment-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.author {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.time {
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.comment-text {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.comment-actions {
+    display: flex;
+    align-items: center;
+}
+
+.reply-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 0;
+}
