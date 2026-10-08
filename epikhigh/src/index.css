@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+@import 'tailwindcss';
+
+html,
+body,
+#root {
+  height: 100%;
+  background: #f5f5f0;
+}
+
+:root {
+  --bg: #f5f5f0;
+  --ink: #0a0a0a;
+  --ink-muted: #555;
+  --border: #d0d0c8;
+  --accent: #0047ff;
+  --accent-hot: #ff3c00;
+  --success: #00b86b;
+  --warn: #ff9500;
+  --panel: #fff;
+  --panel-dark: #0a0a0a;
+  --annotation: rgba(0, 71, 255, 0.08);
+  --radius: 2px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+.font-mono-display {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Blueprint grid overlay */
+.blueprint-grid {
+  background-image:
+    linear-gradient(rgba(0, 71, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 71, 255, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Annotation callout */
+.annotation {
+  background: var(--annotation);
+  border-left: 2px solid var(--accent);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+/* Wireframe screen shell */
+.wireframe-screen {
+  border: 1.5px solid var(--ink);
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+/* Pain point badge */
+.pain-badge {
+  background: #fff0eb;
+  border: 1px solid var(--accent-hot);
+  color: var(--accent-hot);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 1px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Solution badge */
+.solution-badge {
+  background: #e8fff4;
+  border: 1px solid var(--success);
+  color: var(--success);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 1px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-muted); }

@@ -18,6 +18,7 @@ const cents = (amount: number) => Math.round(amount * 100);
 const SEEDED_AT = '2026-09-01T12:00:00.000Z';
 /* ─────────────────────────── Membership data ─────────────────────────── */
 const TIERS = [
+  { tier_id: 'tier_highskool', name: 'High Skool', level: 1, max: 8, presale: 1 },
   { tier_id: 'tier_army', name: 'BTS Army', level: 1, max: 8, presale: 1 },
   { tier_id: 'tier_platinum', name: 'Platinum', level: 4, max: 10, presale: 1 },
   { tier_id: 'tier_gold', name: 'Gold', level: 3, max: 8, presale: 1 },
@@ -25,6 +26,7 @@ const TIERS = [
   { tier_id: 'tier_basic', name: 'Basic', level: 1, max: null, presale: null }, // exercises bridge default
 ];
 const MEMBERS = [
+  { id: 'HeyTa_01', email: 'epikhigh_fan@gmail.com', status: 'ACTIVE', tier: 'tier_highskool', since: '2021-03-15T00:00:00.000Z', renews: '2027-03-15T00:00:00.000Z', name: 'Jeongsik Kim' },
   { id: 'CaratArmyStay', email: 'bts_army@gmail.com', status: 'ACTIVE', tier: 'tier_army', since: '2021-03-15T00:00:00.000Z', renews: '2027-03-15T00:00:00.000Z', name: 'Yoongi Min' },
   { id: 'mem_9f3', email: 'fan@example.com', status: 'ACTIVE', tier: 'tier_gold', since: '2021-03-14T00:00:00.000Z', renews: '2027-03-14T00:00:00.000Z', name: 'Ada Lovelace' },
   { id: 'mem_p01', email: 'platinum@example.com', status: 'ACTIVE', tier: 'tier_platinum', since: '2018-06-01T00:00:00.000Z', renews: '2027-06-01T00:00:00.000Z', name: 'Grace Hopper' },
