@@ -9,10 +9,16 @@ import { formatEventDate } from "../api/format";
 import type { MobileTicketResponse } from "../api/bridgeTypes";
 import TicketBarcode from "../components/TicketBarcode";
 import { useCountdown } from "../api/useCountdown";
+import { getSession } from "../api/purchaseSession";
 
 export default function Wireframe2E({ params }: PageProps) {
   // Venue passed through from 2D (#/2e?venue=<id>); defaults to New York / MetLife Stadium
   const venue = findVenue(params.get("venue"));
+
+  // Logged-in member's handle, built the same way as on 2A.
+  // PresaleGate only renders this page once the member is verified and cached in the session.
+  const member = getSession().member;
+  const handle = member ? `@${member.membershipId}` : "unverified";
 
   // GET /tickets/:ticketId — the bridge derives a fresh rotating value on every call,
   // so re-fetch just after each nextRotationAt to keep the barcode current.
@@ -160,7 +166,7 @@ export default function Wireframe2E({ params }: PageProps) {
             <BridgeErrorNote message={ticketError} />
 
             <div className="font-mono-display" style={{ fontSize: 10, color: "var(--ink-muted)", marginBottom: 10 }}>
-              Fan: @CaratArmyStay | Verified Device ID: #iPhone16-A92B
+              Fan: {handle} | Verified Device ID: #iPhone16-A92B
             </div>
 
             <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>

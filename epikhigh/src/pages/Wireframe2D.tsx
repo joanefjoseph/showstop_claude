@@ -29,7 +29,7 @@ export default function Wireframe2D({ params }: PageProps) {
     ["Seats", seatsLabel],
     ["Fan Account", fanLabel],
     ["Total", totalLabel],
-    ["Protection", "Weverse Fan Auth + Show Stop"],
+    ["Protection", "Ours Co. Fan Auth + Show Stop"],
   ];
 
   const holdText =
@@ -84,7 +84,7 @@ export default function Wireframe2D({ params }: PageProps) {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
           {[
-            { label: "● Saved Weverse Pay / Apple Pay / Google Pay", active: true },
+            { label: "● Saved Apple Pay / Google Pay", active: true },
             { label: "○ Credit / Debit Card", active: false },
           ].map((opt) => (
             <a
@@ -160,7 +160,7 @@ export default function Wireframe2D({ params }: PageProps) {
           className="font-mono-display"
           style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 8, textAlign: "center" }}
         >
-          🔒 Protected by Weverse Fan Authentication & Powered by Show Stop
+          🔒 Protected by Ours Co. Fan Authentication & Powered by Show Stop
         </div>
       </div>
     </TourPageLayout>

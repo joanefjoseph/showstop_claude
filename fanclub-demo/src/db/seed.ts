@@ -18,7 +18,7 @@ const cents = (amount: number) => Math.round(amount * 100);
 const SEEDED_AT = '2026-09-01T12:00:00.000Z';
 /* ─────────────────────────── Membership data ─────────────────────────── */
 const TIERS = [
-  { tier_id: 'tier_highskool', name: 'HiGH SKOOL Stage Pass', level: 1, max: 8, presale: 1 },
+  { tier_id: 'tier_highskool', name: 'Stage Pass', level: 1, max: 8, presale: 1 },
   { tier_id: 'tier_army', name: 'BTS Army', level: 1, max: 8, presale: 1 },
   { tier_id: 'tier_platinum', name: 'Platinum', level: 4, max: 10, presale: 1 },
   { tier_id: 'tier_gold', name: 'Gold', level: 3, max: 8, presale: 1 },

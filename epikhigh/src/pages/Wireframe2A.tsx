@@ -66,7 +66,7 @@ function PreApprovedCard({ member }: { member: MemberState }) {
 
   const handle = m ? `@${m.membershipId}` : member.kind === "loading" ? "verifying…" : "unverified";
   const tierLabel = m
-    ? `${m.tierName} Member`
+    ? `HIGH SKOOL ${m.tierName} Member`
     : member.kind === "loading" ? "checking membership" : member.kind === "error" ? member.message : "unverified";
 
   const statusText =

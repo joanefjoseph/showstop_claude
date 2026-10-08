@@ -31,7 +31,7 @@
 
 /* (was: .container) */
 .td-container {
-  padding: 3vw 0; /* Reduced container padding */
+  padding: 1vw 0 3vw;
 }
 
 /* Button Recreations */
