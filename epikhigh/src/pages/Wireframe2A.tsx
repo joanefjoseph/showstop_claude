@@ -159,8 +159,6 @@ function PreApprovedCard({ member }: { member: MemberState }) {
 function VipFaq() {
   return (
     <div className="html-render">
-      <p><strong>VIP Package Information and FAQ</strong></p><br />
-
       <p>
         <strong>Are tickets and VIP packages refundable? </strong><br />
         All ticket and VIP package sales are final. There are no refunds or exchanges.
@@ -253,6 +251,8 @@ export default function Wireframe2A() {
         <section className="post-content">
           {/* Pre-approved card: first item in post-content, directly above the hero image */}
           <PreApprovedCard member={member} />
+
+          <br /><p><strong>VIP Package Information and FAQ</strong></p><br />
 
           <figure className="hero-image">
             <img src={IMAGES.hero} alt="Epik High Tour" />
