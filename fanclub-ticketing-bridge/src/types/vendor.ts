@@ -25,9 +25,14 @@ export interface VendorPriceLevel {
   fees: Money;
   total: Money;
 }
+/** PRESALE: only membership tiers with presaleAccess may buy. GENERAL: any member. */
+export type SaleType = 'PRESALE' | 'GENERAL';
+/** Event details without the seat list (GET /events/:eventId). */
+export type VendorEvent = Omit<VendorAvailabilityResponse, 'seats' | 'priceLevels'>;
 export interface VendorAvailabilityResponse {
   eventId: string;
   eventName: string;
+  saleType: SaleType;
   startsAt: string; // ISO-8601
   venue: { venueId: string; name: string; city: string; country: string };
   seats: VendorSeat[];

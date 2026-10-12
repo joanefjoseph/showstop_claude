@@ -43,6 +43,7 @@ export async function getEventAvailability(eventId: string): Promise<EventAvaila
     eventId: data.eventId,
     eventName: data.eventName,
     startsAt: data.startsAt,
+    saleType: data.saleType,
     venue: { name: data.venue.name, city: data.venue.city, country: data.venue.country },
     totals,
     sections,

@@ -1,0 +1,448 @@
+/* =====================================================================
+  Page 2B: David Jin | Stand-Up Comedy.
+   Port of the downloaded style.css. Every rule is scoped under .js-page:
+   Vite injects imported CSS globally and App.tsx imports every page at
+   startup, so unscoped * / body / h2 / .container rules would leak into 2C–2E.
+   (html { scroll-behavior } is dropped; smooth scrolling is done in JS.)
+   ===================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+
+/* (was: * reset) */
+.js-page,
+.js-page * {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Fredoka', system-ui, sans-serif;
+}
+
+/* (was: body) */
+.js-page {
+  background-color: #fbfaf6;
+  color: #292722;
+  line-height: 1.6;
+  min-height: 100vh;
+  /* 2C–2E's inline styles use index.css's --accent; use this site's red instead of blue */
+  --accent: #b5121b;
+}
+
+/* Tailwind's preflight (via index.css) sets headings to font-weight: inherit;
+   restore the browser default the original page relied on. */
+.js-page h1,
+.js-page h2,
+.js-page h3 {
+  font-weight: bold;
+}
+
+.js-page .container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.js-page .section {
+  padding: 80px 0;
+}
+
+.js-page .bg-darker {
+  background-color: #f3f0e8;
+}
+
+.js-page h2 {
+  font-size: 2.5rem;
+  margin-bottom: 40px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* Navigation */
+.js-page #navbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background-color: rgba(251, 250, 246, 0.95);
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  border-bottom: 1px solid #e3dfd5;
+}
+
+.js-page .nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 15px 20px;
+}
+
+.js-page .logo img {
+  height: 40px;
+}
+
+.js-page .text-logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #292722;
+  text-decoration: none;
+  letter-spacing: 1px;
+}
+
+.js-page .nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.js-page .profile-link {
+  display: flex;
+  align-items: center;
+  color: #292722;
+  transition: color 0.3s;
+}
+
+.js-page .profile-link:hover {
+  color: #b5121b;
+}
+
+.js-page .nav-links {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.js-page .nav-link {
+  color: #292722;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.js-page .nav-link:hover {
+  color: #b5121b;
+}
+
+.js-page .mobile-toggle {
+  display: none;
+  background: none;
+  border: none;
+  color: #292722;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+/* Buttons */
+.js-page .btn-primary {
+  background-color: #b5121b;
+  color: #fff;
+  padding: 10px 24px;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.js-page .btn-primary:hover {
+  background-color: #941019;
+}
+
+.js-page .btn-secondary {
+  background-color: transparent;
+  color: #292722;
+  padding: 8px 20px;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: bold;
+  border: 2px solid #b5121b;
+  transition: all 0.3s;
+}
+
+.js-page .btn-secondary:hover {
+  background-color: #b5121b;
+  color: #fff;
+}
+
+.js-page .btn-coming-soon {
+  background-color: #e9e6de;
+  color: #716d64;
+  padding: 8px 20px;
+  border-radius: 4px;
+  font-weight: bold;
+  border: 2px solid #e1ddd3;
+  cursor: not-allowed;
+}
+
+/* Hero Section */
+.js-page .hero {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: linear-gradient(rgba(251, 250, 246, 0.86), rgba(251, 250, 246, 0.86)),
+              url('/images/background.png') no-repeat center center/100%;
+  background-color: #fbfaf6;
+  position: relative;
+  padding-top: 70px;
+}
+
+.js-page .hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(251, 250, 246, 0.28);
+}
+
+.js-page .hero-content {
+  position: relative;
+  z-index: 1;
+}
+
+.js-page .hero-content h1 {
+  font-size: 5rem;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+.js-page .hero-content p {
+  font-size: 1.5rem;
+  margin-bottom: 30px;
+  color: #5c594f;
+}
+
+/* Tour Dates */
+.js-page .tour-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.js-page .tour-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fffefa;
+  padding: 20px 30px;
+  border-radius: 8px;
+  transition: transform 0.2s;
+}
+
+.js-page .tour-item:hover {
+  transform: translateY(-2px);
+  background-color: #f6f3ec;
+}
+
+.js-page .tour-info {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
+.js-page .tour-date {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #b5121b;
+  min-width: 120px;
+}
+
+.js-page .tour-venue {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.js-page .tour-city {
+  display: block;
+  font-size: 0.9rem;
+  color: #716d64;
+  font-weight: normal;
+}
+
+/* Videos */
+.js-page .video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.js-page .video-wrapper {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+  height: 0;
+}
+
+.js-page .video-wrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+
+/* About Section */
+.js-page .about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 50px;
+  align-items: center;
+}
+
+.js-page .about-image img {
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 10px 20px rgba(41, 39, 34, 0.14);
+}
+
+.js-page .about-text h2 {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.js-page .about-text p {
+  margin-bottom: 20px;
+  font-size: 1.1rem;
+  color: #5c594f;
+}
+
+.js-page .text-link {
+  color: #a90f18;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+/* Footer */
+.js-page .footer {
+  background-color: #f3f0e8;
+  padding: 60px 0 20px;
+  border-top: 1px solid #e3dfd5;
+}
+
+.js-page .footer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 40px;
+  margin-bottom: 40px;
+}
+
+.js-page .footer-col h3 {
+  margin-bottom: 20px;
+  font-size: 1.2rem;
+  color: #292722;
+}
+
+.js-page .footer-col p {
+  color: #5c594f;
+  margin-bottom: 10px;
+}
+
+.js-page .social-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.js-page .social-links a {
+  color: #5c594f;
+  text-decoration: none;
+  transition: color 0.3s;
+}
+
+.js-page .social-links a:hover {
+  color: #a90f18;
+}
+
+.js-page .newsletter-form {
+  display: flex;
+  gap: 10px;
+}
+
+.js-page .newsletter-form input {
+  padding: 10px;
+  background-color: #fffefa;
+  border: 1px solid #d8d3c8;
+  color: #292722;
+  border-radius: 4px;
+  flex: 1;
+}
+
+.js-page .footer-bottom {
+  text-align: center;
+  color: #716d64;
+  font-size: 0.9rem;
+}
+
+/* Purchase pages (2C–2E): main body between the fixed navbar and the footer */
+.js-page .purchase-main {
+  min-height: 100vh;
+  padding: 110px 20px 80px; /* 70px navbar + breathing room */
+}
+
+.js-page .purchase-panel {
+  max-width: 700px;
+  margin: 0 auto;
+  background-color: #fffefa;
+  border-radius: 8px;
+  box-shadow: 0 10px 20px rgba(41, 39, 34, 0.08);
+  overflow: hidden;
+}
+
+.js-page .purchase-event {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+  padding: 20px 30px;
+  border-bottom: 1px solid #e3dfd5;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .js-page .nav-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 70px;
+    left: 0;
+    width: 100%;
+    background-color: #fbfaf6;
+    padding: 20px 0;
+    border-bottom: 1px solid #e3dfd5;
+  }
+
+  .js-page .nav-links.active {
+    display: flex;
+  }
+
+  .js-page .mobile-toggle {
+    display: block;
+  }
+
+  .js-page .hero-content h1 {
+    font-size: 3.5rem;
+  }
+
+  .js-page .tour-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .js-page .tour-info {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .js-page .about-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .js-page .purchase-event {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }  
+}

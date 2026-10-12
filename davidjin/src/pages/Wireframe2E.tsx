@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import TourPageLayout from "../components/TourPageLayout";
+import PurchasePageLayout from "../components/PurchasePageLayout";
 import BridgeErrorNote from "../components/BridgeErrorNote";
 import { findVenue } from "../data/tourVenues";
 import type { PageProps } from "../routing";
@@ -12,15 +12,15 @@ import { useCountdown } from "../api/useCountdown";
 import { getSession } from "../api/purchaseSession";
 
 export default function Wireframe2E({ params }: PageProps) {
-  // Venue passed through from 2D (#/2e?venue=<id>); defaults to New York / MetLife Stadium
+  // Show passed through from 2D (#/2e?venue=<id>)
   const venue = findVenue(params.get("venue"));
 
-  // Logged-in member's handle, built the same way as on 2A.
-  // PresaleGate only renders this page once the member is verified and cached in the session.
+  // Logged-in member's handle. MembershipGate only renders this page once the
+  // member is verified and cached in the session.
   const member = getSession().member;
   const handle = member ? `@${member.membershipId}` : "unverified";
 
-  // GET /tickets/:ticketId — the bridge derives a fresh rotating value on every call,
+  // GET /tickets/:ticketId: the bridge derives a fresh rotating value on every call,
   // so re-fetch just after each nextRotationAt to keep the barcode current.
   const [ticket, setTicket] = useState<MobileTicketResponse | null>(null);
   const [ticketError, setTicketError] = useState<string | null>(null);
@@ -67,12 +67,12 @@ export default function Wireframe2E({ params }: PageProps) {
   ];
   const eventLine = ticket
     ? `${ticket.event.venue} • ${formatEventDate(ticket.event.startsAt)}`
-    : venue.venue;
+    : `${venue.venue} • ${venue.dateLabel}`;
 
   return (
-    <TourPageLayout>
-      <div style={{ padding: "14px 16px", background: "#fff" }}>
-        {/* Confirmation banner — shows the ticket ID attached to the barcode */}
+    <PurchasePageLayout venue={venue}>
+      <div style={{ padding: "14px 16px" }}>
+        {/* Confirmation banner: shows the ticket ID attached to the barcode */}
         <div
           style={{
             fontSize: 24,
@@ -100,7 +100,7 @@ export default function Wireframe2E({ params }: PageProps) {
         >
           {/* Ticket header */}
           <div style={{ background: "var(--panel-dark)", padding: "12px 14px", color: "#fff" }}>
-            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>EPIK HIGH North America Tour '3.0'</div>
+            <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 4 }}>{venue.showName}</div>
             <div className="font-mono-display" style={{ fontSize: 10, color: "rgba(255,255,255,0.6)" }}>
               {eventLine}
             </div>
@@ -127,7 +127,7 @@ export default function Wireframe2E({ params }: PageProps) {
             ))}
           </div>
 
-          {/* Barcode area — real barcode from GET /tickets/:ticketId */}
+          {/* Barcode area: real barcode from GET /tickets/:ticketId */}
           <div style={{ padding: "12px 14px", textAlign: "center" }}>
             {ticket ? (
               <TicketBarcode barcode={ticket.barcode} />
@@ -149,11 +149,11 @@ export default function Wireframe2E({ params }: PageProps) {
 
             <div className="font-mono-display" style={{ fontSize: 9, color: "var(--accent)", marginBottom: 4 }}>
               {ticket?.barcode.rotating
-                ? `🔵 Blue Bar Rotating (Ticketmaster SafeTix™) — Updates every ${ticket.barcode.rotatesEverySeconds}s` +
+                ? `🔵 Blue Bar Rotating (EventBrite QR Code) — Updates every ${ticket.barcode.rotatesEverySeconds}s` +
                   (rotationSecondsLeft !== null ? ` · next in ${rotationSecondsLeft}s` : "")
                 : ticket
                   ? "Static barcode — does not rotate"
-                  : "🔵 Blue Bar Rotating (Ticketmaster SafeTix™)"}
+                  : "🔵 Blue Bar Rotating (EventBrite QR Code)"}
             </div>
             {ticket && (
               <div
@@ -201,6 +201,6 @@ export default function Wireframe2E({ params }: PageProps) {
           </div>
         </div>
       </div>
-    </TourPageLayout>
+    </PurchasePageLayout>
   );
 }

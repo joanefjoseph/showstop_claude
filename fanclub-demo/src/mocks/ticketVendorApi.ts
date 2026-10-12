@@ -17,7 +17,7 @@ import type {
 import { HttpError, errorHandler, newId, notFound, requestLog, simulatedLatency, toMoney } from './common.ts';
 const MAX_HOLD_SECONDS = 1800;
 const DEFAULT_ROTATION_SECONDS = 15;
-interface EventRow { event_id: string; event_name: string; starts_at: string; venue_id: string; currency: string; last_updated: string; venue_name: string; city: string; country: string }
+interface EventRow { event_id: string; event_name: string; starts_at: string; venue_id: string; currency: string; sale_type: VendorAvailabilityResponse['saleType']; last_updated: string; venue_name: string; city: string; country: string }
 interface SeatRow { seat_id: string; event_id: string; section: string; row_label: string; seat_number: string; price_level_id: string; status: SeatStatus; attributes: string | null; general_admission: number; held_by_cart_id: string | null }
 interface PricedSeatRow extends SeatRow { face_cents: number; fees_cents: number }
 interface PriceLevelRow { price_level_id: string; event_id: string; name: string; face_cents: number; fees_cents: number }
@@ -197,6 +197,7 @@ export function createTicketVendorApi(db: Database.Database) {
       eventId: event.event_id,
       eventName: event.event_name,
       startsAt: event.starts_at,
+      saleType: event.sale_type,
       venue: { venueId: event.venue_id, name: event.venue_name, city: event.city, country: event.country },
       seats: seats.map(toVendorSeat),
       priceLevels: levels.map((p) => ({
@@ -206,6 +207,19 @@ export function createTicketVendorApi(db: Database.Database) {
         fees: toMoney(p.fees_cents, event.currency),
         total: toMoney(p.face_cents + p.fees_cents, event.currency),
       })),
+      lastUpdated: event.last_updated,
+    };
+    res.json(body);
+  });
+  /** 1b. GET /v1/events/:eventId: event details without the seat list. */
+  v1.get('/events/:eventId', (req, res) => {
+    const event = requireEvent(req.params.eventId);
+    const body: Omit<VendorAvailabilityResponse, 'seats' | 'priceLevels'> = {
+      eventId: event.event_id,
+      eventName: event.event_name,
+      startsAt: event.starts_at,
+      saleType: event.sale_type,
+      venue: { venueId: event.venue_id, name: event.venue_name, city: event.city, country: event.country },
       lastUpdated: event.last_updated,
     };
     res.json(body);

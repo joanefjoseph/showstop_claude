@@ -6,6 +6,7 @@ import type {
   VendorBillingRequest,
   VendorCart,
   VendorCreateCartRequest,
+  VendorEvent,
   VendorOrder,
   VendorTicket,
 } from '../types/vendor.ts';
@@ -25,6 +26,10 @@ export class TicketVendorClient {
   /** 1. Seat map / inventory for an event. */
   getEventAvailability(eventId: string): Promise<VendorAvailabilityResponse> {
     return this.http.get(`/events/${encodeURIComponent(eventId)}/availability`);
+  }
+  /** 1b. Event details (name, venue, sale type) without the seat list. */
+  getEvent(eventId: string): Promise<VendorEvent> {
+    return this.http.get(`/events/${encodeURIComponent(eventId)}`);
   }
   /** 3. Create a cart that places a timed hold on the given seats. */
   createCart(req: VendorCreateCartRequest, membershipId: string): Promise<VendorCart> {

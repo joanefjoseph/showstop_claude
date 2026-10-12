@@ -26,6 +26,7 @@ const TIERS = [
   { tier_id: 'tier_basic', name: 'Basic', level: 1, max: null, presale: null }, // exercises bridge default
 ];
 const MEMBERS = [
+  { id: 'comedy_fan', email: 'funnygirl@gmail.com', status: 'ACTIVE', tier: 'tier_basic', since: '2024-08-02T00:00:00.000Z', renews: null, name: 'Rachel Lim' },
   { id: 'HeyTa_01', email: 'epikhigh_fan@gmail.com', status: 'ACTIVE', tier: 'tier_highskool', since: '2021-03-15T00:00:00.000Z', renews: '2027-03-15T00:00:00.000Z', name: 'Jeongsik Kim' },
   { id: 'CaratArmyStay', email: 'bts_army@gmail.com', status: 'ACTIVE', tier: 'tier_army', since: '2021-03-15T00:00:00.000Z', renews: '2027-03-15T00:00:00.000Z', name: 'Yoongi Min' },
   { id: 'mem_9f3', email: 'fan@example.com', status: 'ACTIVE', tier: 'tier_gold', since: '2021-03-14T00:00:00.000Z', renews: '2027-03-14T00:00:00.000Z', name: 'Ada Lovelace' },
@@ -43,9 +44,9 @@ const VENUES = [
   ['ven_blu', 'The Blue Room', 'Nashville', 'US'],
 ];
 const EVENTS = [
-  ['evt_123', 'The Midnight Echoes — World Tour', '2026-10-18T01:00:00.000Z', 'ven_rvs'],
-  ['evt_456', 'Neon Harbor Festival 2026', '2026-11-07T23:30:00.000Z', 'ven_hbr'],
-  ['evt_999', 'Acoustic Sessions: Unplugged (Sold Out)', '2026-09-26T00:00:00.000Z', 'ven_blu'],
+  ['evt_123', 'The Midnight Echoes — World Tour', '2026-10-18T01:00:00.000Z', 'ven_rvs', 'PRESALE'],
+  ['evt_456', 'Neon Harbor Festival 2026', '2026-11-07T23:30:00.000Z', 'ven_hbr', 'PRESALE'],
+  ['evt_999', 'Acoustic Sessions: Unplugged (Sold Out)', '2026-09-26T00:00:00.000Z', 'ven_blu', 'PRESALE'],
 ];
 const PRICE_LEVELS = [
   ['pl_123_floor', 'evt_123', 'Floor Front', 189.5, 24.75],
@@ -120,7 +121,7 @@ function seedVendor(db: Database.Database) {
   const insVenue = db.prepare(`INSERT INTO venues (venue_id, name, city, country) VALUES (?, ?, ?, ?)`);
   VENUES.forEach((v) => insVenue.run(...v));
   const insEvent = db.prepare(
-    `INSERT INTO events (event_id, event_name, starts_at, venue_id, currency, last_updated) VALUES (?, ?, ?, ?, 'USD', ?)`,
+    `INSERT INTO events (event_id, event_name, starts_at, venue_id, sale_type, currency, last_updated) VALUES (?, ?, ?, ?, ?, 'USD', ?)`,
   );
   EVENTS.forEach((e) => insEvent.run(...e, SEEDED_AT));
   const insLevel = db.prepare(

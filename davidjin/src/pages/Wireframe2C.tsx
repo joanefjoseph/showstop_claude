@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import TourPageLayout from "../components/TourPageLayout";
+import PurchasePageLayout from "../components/PurchasePageLayout";
 import BridgeErrorNote from "../components/BridgeErrorNote";
 import { findVenue } from "../data/tourVenues";
 import type { PageProps } from "../routing";
@@ -8,42 +8,158 @@ import { BridgeError, describeError } from "../api/bridgeClient";
 import { buildSeatOptions, optionTitle } from "../api/seatOptions";
 import { getSession } from "../api/purchaseSession";
 import { useBridgeAction } from "../api/useBridgeAction";
-import type { EventAvailabilityResponse } from "../api/bridgeTypes";
+import type { EventAvailabilityResponse, SectionAvailability } from "../api/bridgeTypes";
 
-/* Minimal stadium SVG placeholder (decorative; unchanged) */
-function StadiumMap() {
-  return (
-    <svg
-      viewBox="0 0 200 130"
-      style={{ width: "100%", height: "100%", display: "block" }}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <rect width="200" height="130" fill="#f8f8f5" />
-      <ellipse cx="100" cy="65" rx="90" ry="55" stroke="#d0d0c8" strokeWidth="1" fill="#f0f0ec" />
-      <ellipse cx="100" cy="65" rx="65" ry="38" stroke="#c0c0b8" strokeWidth="1" fill="#e8e8e2" />
-      <ellipse cx="100" cy="65" rx="45" ry="25" stroke="#b0b0a8" strokeWidth="1" fill="#dcdcd8" />
-      <rect x="78" y="55" width="44" height="20" rx="1" fill="#333" stroke="#0a0a0a" strokeWidth="0.5" />
-      <text x="100" y="67" textAnchor="middle" fill="#fff" fontSize="6" fontFamily="JetBrains Mono, monospace">STAGE</text>
-      <rect x="83" y="75" width="14" height="8" rx="0.5" fill="var(--accent)" opacity="0.9" />
-      <text x="90" y="81" textAnchor="middle" fill="#fff" fontSize="5" fontFamily="JetBrains Mono, monospace">FL A1</text>
-      {[["FL A2", 100], ["FL A3", 117]].map(([label, x]) => (
-        <g key={label as string}>
-          <rect x={Number(x) - 7} y={75} width={14} height={8} rx={0.5} fill="#c8c8c0" />
-          <text x={Number(x)} y={81} textAnchor="middle" fill="#555" fontSize={5} fontFamily="JetBrains Mono, monospace">
-            {label as string}
+type Pt = [number, number];
+type Tier = "floor" | "lower" | "upper";
+
+const BAND = 24; // thickness of each U
+const GAP = 6;   // space between stage, floor and the two U's
+const FILL: Record<Tier, string> = { floor: "#d2d0c7", lower: "#dddbd2", upper: "#e7e5dd" };
+
+/* Geometry (viewBox units). Stage at the top, everything centred on x = 150. */
+const STAGE = { x: 110, y: 8, w: 80, h: 18 };
+const FLOOR = { x: 110, y: 34, w: 80, h: 60 };
+// Centre lines of the two U's: down the left side, across the front, up the right side
+const INNER_U: Pt[] = [[92, 8], [92, 112], [208, 112], [208, 8]];
+const OUTER_U: Pt[] = [[62, 8], [62, 142], [238, 142], [238, 8]];
+
+/** The bridge sends each seat's price-level name as price.level ("Floor A1", "Lower Bowl", "Club"). */
+function levelOf(s: SectionAvailability): string {
+  return (s.seats[0]?.price.level ?? s.section).toLowerCase();
+}
+
+/** "floor" levels sit in front of the stage, "lower" levels form the inner U, everything else the outer U. */
+function groupByTier(sections: SectionAvailability[]): Record<Tier, SectionAvailability[]> {
+  const tiers: Record<Tier, SectionAvailability[]> = { floor: [], lower: [], upper: [] };
+  for (const s of sections) {
+    const level = levelOf(s);
+    tiers[level.includes("floor") ? "floor" : level.includes("lower") ? "lower" : "upper"].push(s);
+  }
+  return tiers;
+}
+
+/** Cuts a polyline into n equal-length pieces (small gap between neighbours), one per section. */
+function splitPolyline(points: Pt[], n: number, gap = 3) {
+  const segLens = points.slice(1).map((p, i) => Math.hypot(p[0] - points[i][0], p[1] - points[i][1]));
+  const total = segLens.reduce((a, b) => a + b, 0);
+
+  // Point at a distance along the line, and whether that stretch runs vertically
+  const at = (dist: number): { pt: Pt; vertical: boolean } => {
+    let d = dist;
+    for (let i = 0; i < segLens.length; i++) {
+      if (d <= segLens[i] || i === segLens.length - 1) {
+        const a = points[i];
+        const b = points[i + 1];
+        const t = segLens[i] ? d / segLens[i] : 0;
+        return { pt: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t], vertical: a[0] === b[0] };
+      }
+      d -= segLens[i];
+    }
+    return { pt: points[0], vertical: false };
+  };
+
+  return Array.from({ length: n }, (_, i) => {
+    const start = (total * i) / n + (i > 0 ? gap / 2 : 0);
+    const end = (total * (i + 1)) / n - (i < n - 1 ? gap / 2 : 0);
+    // Corners of the U that fall inside this piece
+    const corners: Pt[] = [];
+    let run = 0;
+    for (let k = 0; k < segLens.length - 1; k++) {
+      run += segLens[k];
+      if (run > start && run < end) corners.push(points[k + 1]);
+    }
+    const path = [at(start).pt, ...corners, at(end).pt];
+    return {
+      d: path.map(([x, y], k) => `${k ? "L" : "M"}${x} ${y}`).join(" "),
+      mid: at((start + end) / 2),
+    };
+  });
+}
+
+/**
+ * Seat map drawn from the event's live inventory. Floor sections are a block directly in
+ * front of the stage; the lower level wraps the stage on three sides as a U; the remaining
+ * (upper) levels form a second U around that one. The selected option's section is highlighted.
+ */
+function SeatMap({ sections, selectedSection }: { sections: SectionAvailability[]; selectedSection?: string }) {
+  const tiers = groupByTier(sections);
+  const label = (s: SectionAvailability) => `${s.section} · ${s.availableCount} left`;
+  const textProps = {
+    textAnchor: "middle" as const,
+    dominantBaseline: "central" as const,
+    fontSize: 6,
+    fontFamily: "JetBrains Mono, monospace",
+  };
+
+  // One U per level; several sections on the same level share the U end to end
+  const ring = (tier: "lower" | "upper", line: Pt[]) =>
+    splitPolyline(line, tiers[tier].length).map(({ d, mid }, i) => {
+      const s = tiers[tier][i];
+      const active = s.section === selectedSection;
+      const [x, y] = mid.pt;
+      return (
+        <g key={s.section}>
+          <path
+            d={d}
+            fill="none"
+            strokeWidth={BAND}
+            strokeLinejoin="round"
+            style={{ stroke: active ? "var(--accent)" : FILL[tier] }}
+          />
+          <text
+            {...textProps}
+            x={x}
+            y={y}
+            fill={active ? "#fff" : "#555"}
+            transform={mid.vertical ? `rotate(-90 ${x} ${y})` : undefined}
+          >
+            {label(s)}
           </text>
         </g>
-      ))}
-      <text x="100" y="108" textAnchor="middle" fill="#999" fontSize="6" fontFamily="JetBrains Mono, monospace">100 LEVEL</text>
-      <rect x="10" y="10" width="8" height="8" fill="var(--accent)" rx="0.5" />
-      <text x="21" y="17" fill="var(--accent)" fontSize="6" fontFamily="JetBrains Mono, monospace">Selected</text>
+      );
+    });
+
+  // Floor sections sit side by side in the block in front of the stage
+  const floorCount = tiers.floor.length;
+  const floorW = floorCount ? (FLOOR.w - 3 * (floorCount - 1)) / floorCount : 0;
+
+  return (
+    <svg
+      viewBox="44 0 212 162"
+      role="img"
+      aria-label="Seat map"
+      style={{ width: "100%", maxWidth: 520, height: "auto", display: "block", margin: "0 auto" }}
+    >
+      <rect x={44} y={0} width={212} height={162} fill="#f8f8f5" />
+
+      <rect x={STAGE.x} y={STAGE.y} width={STAGE.w} height={STAGE.h} rx={1} fill="#333" />
+      <text {...textProps} x={150} y={STAGE.y + STAGE.h / 2} fill="#fff">STAGE</text>
+
+      {tiers.floor.map((s, i) => {
+        const active = s.section === selectedSection;
+        const x = FLOOR.x + i * (floorW + 3);
+        return (
+          <g key={s.section}>
+            <rect
+              x={x} y={FLOOR.y} width={floorW} height={FLOOR.h} rx={2}
+              style={{ fill: active ? "var(--accent)" : FILL.floor }}
+            />
+            <text {...textProps} x={x + floorW / 2} y={FLOOR.y + FLOOR.h / 2} fill={active ? "#fff" : "#555"}>
+              {label(s)}
+            </text>
+          </g>
+        );
+      })}
+
+      {ring("lower", INNER_U)}
+      {ring("upper", OUTER_U)}
     </svg>
   );
 }
 
 export default function Wireframe2C({ params }: PageProps) {
-  // Venue chosen on 2B (#/2c?venue=<id>); defaults to New York / MetLife Stadium
+  // Show chosen on 2B (#/2c?venue=<id>)
   const venue = findVenue(params.get("venue"));
   const nextHref = `#/2d?venue=${venue.id}`;
   const member = getSession().member;
@@ -53,7 +169,7 @@ export default function Wireframe2C({ params }: PageProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // GET /events/:id/availability — live inventory for this venue's event
+  // GET /events/:id/availability: live inventory for this show
   useEffect(() => {
     let cancelled = false;
     loadAvailability(venue.id)
@@ -75,7 +191,7 @@ export default function Wireframe2C({ params }: PageProps) {
       await lockSeats(venue.id, selected.seatIds);
     } catch (err) {
       if (err instanceof BridgeError && err.status === 409) {
-        // Someone else took these seats — refresh the list so the user can pick again
+        // Someone else took these seats: refresh the list so the user can pick again
         setAvailability(await loadAvailability(venue.id));
         setSelectedId(null);
         throw new Error("Those seats were just taken — the list has been refreshed. Please pick another option.");
@@ -85,131 +201,125 @@ export default function Wireframe2C({ params }: PageProps) {
   };
 
   return (
-    <TourPageLayout>
-      <div style={{ background: "#fff" }}>
-        {/* Header */}
-        <div
-          style={{
-            padding: "10px 16px",
-            borderBottom: "1px solid var(--border)",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 12,
-          }}
-        >
-          <div>
-            <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1.25 }}>
-              EPIK HIGH North America Tour '3.0' — {venue.city} ({venue.venue})
-            </div>
-            <div className="font-mono-display" style={{ fontSize: 10, color: "var(--success)", marginTop: 2 }}>
-              Presale Access: 🟢 UNLOCKED ({member?.tierName ?? "Regular"} Tier)
-            </div>
-          </div>
-          <div
-            className="font-mono-display"
-            style={{ fontSize: 9, color: "var(--ink-muted)", border: "1px solid var(--border)", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}
-          >
-            GET /events/:id/availability
-          </div>
+    <PurchasePageLayout venue={venue}>
+      {/* Member + route */}
+      <div
+        style={{
+          padding: "10px 16px",
+          borderBottom: "1px solid var(--border)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <div className="font-mono-display" style={{ fontSize: 10, color: "var(--success)" }}>
+          {member ? `Verified member: @${member.membershipId}` : "Member not verified"}
         </div>
-
-        {/* Map + inventory */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 0 }}>
-          <div style={{ borderBottom: "1px solid var(--border)", padding: 24, height: 380 }}>
-            <StadiumMap />
-          </div>
-
-          <div style={{ padding: 20 }}>
-            <div
-              className="font-mono-display"
-              style={{ fontSize: 14, fontWeight: 600, marginBottom: 14, color: "var(--ink-muted)" }}
-            >
-              Available Sections (Live Inventory)
-            </div>
-
-            {loadError && <BridgeErrorNote message={loadError} />}
-            {!availability && !loadError && (
-              <div className="font-mono-display" style={{ fontSize: 11, color: "var(--ink-muted)" }}>
-                Loading live inventory…
-              </div>
-            )}
-            {availability && options.length === 0 && (
-              <div className="font-mono-display" style={{ fontSize: 11, color: "var(--ink-muted)" }}>
-                No adjacent seat pairs are available for this event.
-              </div>
-            )}
-
-            {options.map((o) => {
-              const active = o.id === selected?.id;
-              return (
-                <button
-                  key={o.id}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => setSelectedId(o.id)}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    textAlign: "left",
-                    border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
-                    background: active ? "#f0f5ff" : "#fff",
-                    padding: "12px 16px",
-                    marginBottom: 10,
-                    borderRadius: 1,
-                    cursor: "pointer",
-                  }}
-                >
-                  <div className="font-mono-display" style={{ fontSize: 15, fontWeight: active ? 600 : 400 }}>
-                    {optionTitle(o)}
-                  </div>
-                  {active && (
-                    <div
-                      className="font-mono-display"
-                      style={{ fontSize: 14, color: "var(--accent)", marginTop: 4 }}
-                    >
-                      {o.seatLabels.length} seats selected [{o.seatLabels.join(", ")}]
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-
-            {/* POST /carts/lock for the selected pair, then on to 2D — checkout */}
-            <a
-              href={nextHref}
-              aria-disabled={!selected}
-              onClick={(e) => {
-                e.preventDefault();
-                if (selected) void run("lock", lockAction, nextHref);
-              }}
-              aria-busy={pendingKey === "lock"}
-              style={{
-                background: "var(--accent)",
-                color: "#fff",
-                padding: "14px 18px",
-                fontSize: 16,
-                fontFamily: "'JetBrains Mono', monospace",
-                fontWeight: 600,
-                borderRadius: 1,
-                marginTop: 14,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                textDecoration: "none",
-                cursor: selected && !pendingKey ? "pointer" : "not-allowed",
-                opacity: !selected || pendingKey ? 0.6 : 1,
-              }}
-            >
-              🔒{" "}
-              {pendingKey === "lock"
-                ? "Locking seats…"
-                : `Reserve & Lock Seats (${selected?.seatIds.length ?? 0})`}
-            </a>
-            <BridgeErrorNote message={error} />
-          </div>
+        <div
+          className="font-mono-display"
+          style={{ fontSize: 9, color: "var(--ink-muted)", border: "1px solid var(--border)", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}
+        >
+          GET /events/:id/availability
         </div>
       </div>
-    </TourPageLayout>
+
+      {/* Map + inventory */}
+      <div style={{ borderBottom: "1px solid var(--border)", padding: 24 }}>
+        {availability ? (
+          <SeatMap sections={availability.sections} selectedSection={selected?.section} />
+        ) : (
+          <div className="font-mono-display" style={{ fontSize: 11, color: "var(--ink-muted)", textAlign: "center" }}>
+            {loadError ? "Seat map unavailable" : "Loading seat map…"}
+          </div>
+        )}
+      </div>
+
+      <div style={{ padding: 20 }}>
+        <div
+          className="font-mono-display"
+          style={{ fontSize: 14, fontWeight: 600, marginBottom: 14, color: "var(--ink-muted)" }}
+        >
+          Available Sections (Live Inventory)
+        </div>
+
+        {loadError && <BridgeErrorNote message={loadError} />}
+        {!availability && !loadError && (
+          <div className="font-mono-display" style={{ fontSize: 11, color: "var(--ink-muted)" }}>
+            Loading live inventory…
+          </div>
+        )}
+        {availability && options.length === 0 && (
+          <div className="font-mono-display" style={{ fontSize: 11, color: "var(--ink-muted)" }}>
+            No adjacent seat pairs are available for this show.
+          </div>
+        )}
+
+        {options.map((o) => {
+          const active = o.id === selected?.id;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              aria-pressed={active}
+              onClick={() => setSelectedId(o.id)}
+              style={{
+                display: "block",
+                width: "100%",
+                textAlign: "left",
+                border: `1px solid ${active ? "var(--accent)" : "var(--border)"}`,
+                background: active ? "#fdf1f1" : "#fff",
+                padding: "12px 16px",
+                marginBottom: 10,
+                borderRadius: 1,
+                cursor: "pointer",
+              }}
+            >
+              <div className="font-mono-display" style={{ fontSize: 15, fontWeight: active ? 600 : 400 }}>
+                {optionTitle(o)}
+              </div>
+              {active && (
+                <div className="font-mono-display" style={{ fontSize: 14, color: "var(--accent)", marginTop: 4 }}>
+                  {o.seatLabels.length} seats selected [{o.seatLabels.join(", ")}]
+                </div>
+              )}
+            </button>
+          );
+        })}
+
+        {/* POST /carts/lock for the selected pair, then on to 2D (checkout) */}
+        <a
+          href={nextHref}
+          aria-disabled={!selected}
+          onClick={(e) => {
+            e.preventDefault();
+            if (selected) void run("lock", lockAction, nextHref);
+          }}
+          aria-busy={pendingKey === "lock"}
+          style={{
+            background: "var(--accent)",
+            color: "#fff",
+            padding: "14px 18px",
+            fontSize: 16,
+            fontFamily: "'JetBrains Mono', monospace",
+            fontWeight: 600,
+            borderRadius: 1,
+            marginTop: 14,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            textDecoration: "none",
+            cursor: selected && !pendingKey ? "pointer" : "not-allowed",
+            opacity: !selected || pendingKey ? 0.6 : 1,
+          }}
+        >
+          🔒{" "}
+          {pendingKey === "lock"
+            ? "Locking seats…"
+            : `Reserve & Lock Seats (${selected?.seatIds.length ?? 0})`}
+        </a>
+        <BridgeErrorNote message={error} />
+      </div>
+    </PurchasePageLayout>
   );
 }

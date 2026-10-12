@@ -1,4 +1,4 @@
-import TourPageLayout from "../components/TourPageLayout";
+import PurchasePageLayout from "../components/PurchasePageLayout";
 import BridgeErrorNote from "../components/BridgeErrorNote";
 import { findVenue } from "../data/tourVenues";
 import type { PageProps } from "../routing";
@@ -9,7 +9,7 @@ import { useCountdown, formatMMSS } from "../api/useCountdown";
 import { formatMoney } from "../api/format";
 
 export default function Wireframe2D({ params }: PageProps) {
-  // Venue passed through from 2C (#/2d?venue=<id>); defaults to New York / MetLife Stadium
+  // Show passed through from 2C (#/2d?venue=<id>)
   const venue = findVenue(params.get("venue"));
   const { member, cart } = getSession();
   const { pendingKey, error, run } = useBridgeAction();
@@ -23,13 +23,13 @@ export default function Wireframe2D({ params }: PageProps) {
   const totalLabel = cart
     ? `${formatMoney(cart.total)} ${cart.total.currency} (incl. taxes & fees)`
     : "—";
-  const fanLabel = member ? `${member.email} (Verified ${member.tierName})` : "Not verified";
+  const fanLabel = member ? `${member.email} (@${member.membershipId})` : "Not verified";
 
   const summaryRows: Array<[string, string]> = [
     ["Seats", seatsLabel],
     ["Fan Account", fanLabel],
     ["Total", totalLabel],
-    ["Protection", "Ours Co. Fan Auth + Show Stop"],
+    ["Protection", "DJ Comedy Fan Auth + Show Stop"],
   ];
 
   const holdText =
@@ -40,9 +40,9 @@ export default function Wireframe2D({ params }: PageProps) {
         : `Reservation Held: ${formatMMSS(remaining)}`;
 
   return (
-    <TourPageLayout>
+    <PurchasePageLayout venue={venue}>
       {/* Live hold countdown */}
-      <div style={{ background: "#fff", padding: "8px 16px", display: "flex", justifyContent: "right", alignItems: "center" }}>
+      <div style={{ padding: "8px 16px", display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
         <div
           className="font-mono-display"
           style={{
@@ -61,9 +61,9 @@ export default function Wireframe2D({ params }: PageProps) {
         </div>
       </div>
 
-      <div style={{ padding: "14px 16px", background: "#fff" }}>
+      <div style={{ padding: "14px 16px" }}>
         <div style={{ fontSize: 24, fontWeight: 700, lineHeight: 1.25, marginBottom: 12 }}>
-          Order Summary: EPIK HIGH North America Tour<br />({venue.venue})
+          Order Summary
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
@@ -95,7 +95,7 @@ export default function Wireframe2D({ params }: PageProps) {
                 fontSize: 10,
                 padding: "7px 10px",
                 border: `1px solid ${opt.active ? "var(--accent)" : "var(--border)"}`,
-                background: opt.active ? "#f0f5ff" : "#fff",
+                background: opt.active ? "#fdf1f1" : "#fff",
                 borderRadius: 1,
                 color: opt.active ? "var(--accent)" : "var(--ink-muted)",
               }}
@@ -129,7 +129,7 @@ export default function Wireframe2D({ params }: PageProps) {
           </span>
         </div>
 
-        {/* PUT /carts/:id/billing → PUT /carts/:id/commit, then on to 2E — wallet */}
+        {/* PUT /carts/:id/billing → PUT /carts/:id/commit, then on to 2E (wallet) */}
         <a
           href={nextHref}
           onClick={(e) => {
@@ -160,9 +160,9 @@ export default function Wireframe2D({ params }: PageProps) {
           className="font-mono-display"
           style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 8, textAlign: "center" }}
         >
-          🔒 Protected by Ours Co. Fan Authentication & Powered by Show Stop
+          🔒 Protected by DJ Comedy Fan Authentication &amp; Powered by Show Stop
         </div>
       </div>
-    </TourPageLayout>
+    </PurchasePageLayout>
   );
 }

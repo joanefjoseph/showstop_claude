@@ -1,26 +1,24 @@
 import { useEffect, useState, type ComponentType } from "react";
 import type { PageProps } from "./routing";
-import PresaleGate from "./components/PresaleGate";
-import Wireframe2A from "./pages/Wireframe2A";
+import MembershipGate from "./components/MembershipGate";
 import Wireframe2B from "./pages/Wireframe2B";
 import Wireframe2C from "./pages/Wireframe2C";
 import Wireframe2D from "./pages/Wireframe2D";
 import Wireframe2E from "./pages/Wireframe2E";
 
 interface Page {
-  /** URL hash, e.g. http://localhost:4002/#/2b */
+  /** URL hash, e.g. http://localhost:5000/#/2c */
   id: string;
   Component: ComponentType<PageProps>;
-  /** Only members whose tier includes presale access may open this page */
-  requiresPresale?: boolean;
+  /** The page needs a verified member in the session (any tier) */
+  requiresMember?: boolean;
 }
 
 const PAGES: Page[] = [
-  { id: "2a", Component: Wireframe2A },                         // Tour notice
-  { id: "2b", Component: Wireframe2B, requiresPresale: true },  // Tickets tab: tour dates
-  { id: "2c", Component: Wireframe2C, requiresPresale: true },  // Tickets tab: seat selection (?venue=<id>)
-  { id: "2d", Component: Wireframe2D, requiresPresale: true },  // Tickets tab: checkout
-  { id: "2e", Component: Wireframe2E, requiresPresale: true },  // Tickets tab: wallet
+  { id: "2b", Component: Wireframe2B },                        // Landing: David Jin comedy page
+  { id: "2c", Component: Wireframe2C, requiresMember: true },  // Tickets: seat selection (?venue=<id>)
+  { id: "2d", Component: Wireframe2D, requiresMember: true },  // Tickets: checkout
+  { id: "2e", Component: Wireframe2E, requiresMember: true },  // Tickets: wallet
 ];
 
 interface Route {
@@ -28,7 +26,7 @@ interface Route {
   params: URLSearchParams;
 }
 
-/* Reads the current page (and any ?query params) from the URL hash; falls back to the first page. */
+/* Reads the current page (and any ?query params) from the URL hash; falls back to the first page (2B). */
 function routeFromHash(): Route {
   const [path = "", query = ""] = window.location.hash.replace(/^#\/?/, "").split("?");
   const index = PAGES.findIndex((p) => p.id === path.toLowerCase());
@@ -50,7 +48,7 @@ export default function App() {
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
-  const { Component: Wireframe, requiresPresale } = PAGES[route.pageIndex];
+  const { Component: Wireframe, requiresMember } = PAGES[route.pageIndex];
   const page = <Wireframe params={route.params} />;
-  return requiresPresale ? <PresaleGate>{page}</PresaleGate> : page;
+  return requiresMember ? <MembershipGate>{page}</MembershipGate> : page;
 }

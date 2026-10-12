@@ -1,4 +1,4 @@
-import type { Money, CartStatus } from './vendor.ts';
+import type { Money, CartStatus, SaleType } from './vendor.ts';
 import type { MembershipStatus, MembershipTier } from './membership.ts';
 export interface AvailableSeat {
   seatId: string;
@@ -18,6 +18,7 @@ export interface EventAvailabilityResponse {
   eventId: string;
   eventName: string;
   startsAt: string;
+  saleType: SaleType;
   venue: { name: string; city: string; country: string };
   totals: { available: number; held: number; sold: number };
   sections: SectionAvailability[];

@@ -18,10 +18,16 @@ export async function lockSeats(member: MembershipRecord, input: SeatLockInput):
       `${member.tier.name} members may hold at most ${maxSeats} seats per order`,
       { requested: input.seatIds.length, max: maxSeats });
   }
-  // NEW: presale inventory is only available to tiers with presale access
+  // Presale events are limited to tiers with presale access; general-sale events are open to
+  // any member who passes requireMembership. The sale type is event data from the ticket vendor,
+  // and anything other than an explicit GENERAL is treated as presale.
+  // Only looked up when it matters, so presale-tier members skip the extra vendor call.
   if (member.tier.presaleAccess !== true) {
-    throw new AppError(403, 'PRESALE_ACCESS_REQUIRED',
-      `${member.tier.name} members do not have presale access`);
+    const event = await ticketVendorClient.getEvent(input.eventId);   // was getEventAvailability
+    if (event.saleType !== 'GENERAL') {
+      throw new AppError(403, 'PRESALE_ACCESS_REQUIRED',
+        `${event.eventName} is a presale event and ${member.tier.name} members do not have presale access`);
+    }
   }
   const cart = await ticketVendorClient.createCart(
     {

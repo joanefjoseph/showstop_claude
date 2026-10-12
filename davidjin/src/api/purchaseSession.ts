@@ -7,7 +7,6 @@ export interface MemberInfo {
   status: MembershipStatus;
   tierId: string;
   tierName: string;
-  presaleAccess: boolean;      // NEW — from tier.presaleAccess
   eligibleToPurchase: boolean;
   reason?: string;
 }

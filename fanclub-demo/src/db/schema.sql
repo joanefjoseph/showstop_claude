@@ -43,6 +43,7 @@ CREATE TABLE events (
   starts_at    TEXT NOT NULL,
   venue_id     TEXT NOT NULL REFERENCES venues(venue_id),
   currency     TEXT NOT NULL DEFAULT 'USD',
+  sale_type    TEXT NOT NULL CHECK (sale_type IN ('PRESALE','GENERAL')), -- PRESALE: tier needs presale access; GENERAL: any member
   last_updated TEXT NOT NULL
 );
 CREATE TABLE price_levels (

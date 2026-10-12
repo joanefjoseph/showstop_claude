@@ -5,7 +5,7 @@ import {
   type LockedCart, type MemberInfo, type PlacedOrder,
 } from "./purchaseSession";
 
-/** Demo billing profile. The page shows "Saved Weverse Pay" selected → WALLET. */
+/** Demo billing profile. The page shows a saved wallet selected → WALLET. */
 const DEMO_ADDRESS = {
   line1: "1 MetLife Stadium Dr", city: "East Rutherford", region: "NJ", postalCode: "07073", country: "US",
 };
@@ -17,8 +17,9 @@ function configuredEmail(): string {
   return email;
 }
 
-/* ───────────── 2A: verify membership ───────────── */
+/* ------------- membership validation ------------- */
 
+/** POST /membership/verify for EMAIL_ADDRESS; caches the member in the session. */
 export async function verifyMembership(): Promise<MemberInfo> {
   const email = configuredEmail();
   let res;
@@ -37,7 +38,6 @@ export async function verifyMembership(): Promise<MemberInfo> {
     status: res.status!,
     tierId: res.tier!.tierId,
     tierName: res.tier!.name,
-    presaleAccess: res.tier?.presaleAccess === true, // NEW — null/undefined (e.g. Basic) = no access
     eligibleToPurchase: res.eligibleToPurchase,
     reason: res.reason,
   };
@@ -45,40 +45,32 @@ export async function verifyMembership(): Promise<MemberInfo> {
   return member;
 }
 
-/** Presale eligible = tier includes presale access AND the membership is ACTIVE. */
-export function hasPresaleAccess(m: MemberInfo): boolean {
-  return m.presaleAccess === true && m.eligibleToPurchase;
-}
-
-/** Cached member if it's for the configured email and has all current fields; otherwise re-verify. */
-async function currentMember(): Promise<MemberInfo> {
+/** The session's member, if it was verified for the currently configured email. */
+export function cachedMember(): MemberInfo | undefined {
   const cached = getSession().member;
-  if (
-    cached &&
-    cached.email === configuredEmail() &&
-    typeof cached.presaleAccess === "boolean" // entries cached before presaleAccess existed get refreshed
-  ) {
-    return cached;
-  }
-  return verifyMembership();
+  return cached && cached.email === __EMAIL_ADDRESS__.trim() ? cached : undefined;
 }
 
-/** Throws unless the member may use the presale flow. Used by the route guard and every purchase action. */
-export async function requirePresaleMember(): Promise<MemberInfo> {
+/** Cached member if there is one for the configured email; otherwise verify now. */
+async function currentMember(): Promise<MemberInfo> {
+  return cachedMember() ?? verifyMembership();
+}
+
+/**
+ * Throws unless EMAIL_ADDRESS belongs to an active membership. Tier and presale access
+ * are not checked. The member's id is what ties the cart, order, ticket and rotating
+ * barcode to the logged-in fan. Used by 2B's "Buy Tickets", the route guard and every
+ * purchase action.
+ */
+export async function requireMember(): Promise<MemberInfo> {
   const member = await currentMember();
   if (!member.eligibleToPurchase) {
     throw new Error(member.reason ?? "This membership is not eligible to purchase tickets");
   }
-  if (!member.presaleAccess) {
-    throw new Error(`${member.tierName} tier does not include presale access`);
-  }
   return member;
 }
 
-/** Kept so existing calls in lockSeats / completePurchase need no changes. */
-const eligibleMember = requirePresaleMember;
-
-/* ───────────── 2B / 2C: live availability ───────────── */
+/* ------------- 2B / 2C: live availability ------------- */
 
 export async function loadAvailability(eventId: string): Promise<EventAvailabilityResponse> {
   const availability = await bridge.getAvailability(eventId);
@@ -86,10 +78,10 @@ export async function loadAvailability(eventId: string): Promise<EventAvailabili
   return availability;
 }
 
-/* ───────────── 2C → 2D: lock the chosen seats ───────────── */
+/* ------------- 2C → 2D: lock the chosen seats ------------- */
 
 export async function lockSeats(eventId: string, seatIds: string[]): Promise<LockedCart> {
-  const member = await eligibleMember();
+  const member = await requireMember();
 
   // Re-use the current hold if it's the same seats and still has time left
   const existing = getSession().cart;
@@ -124,10 +116,10 @@ export async function lockSeats(eventId: string, seatIds: string[]): Promise<Loc
   return cart;
 }
 
-/* ───────────── 2D → 2E: billing + commit ───────────── */
+/* ------------- 2D → 2E: billing + commit ------------- */
 
 function buildBilling(member: MemberInfo): BillingRequest {
-  const [firstName, ...rest] = (member.displayName ?? "HIGH SKOOL Member").trim().split(/\s+/);
+  const [firstName, ...rest] = (member.displayName ?? "Fan Member").trim().split(/\s+/);
   return {
     customer: { firstName, lastName: rest.join(" ") || "Member", email: member.email },
     address: DEMO_ADDRESS,
@@ -136,7 +128,7 @@ function buildBilling(member: MemberInfo): BillingRequest {
 }
 
 export async function completePurchase(): Promise<PlacedOrder> {
-  const member = await eligibleMember();
+  const member = await requireMember();
   const { cart } = getSession();
   if (!cart) throw new Error("No seats are locked — go back and reserve seats first");
   if (Date.parse(cart.holdExpiresAt) <= Date.now()) {
@@ -157,7 +149,7 @@ export async function completePurchase(): Promise<PlacedOrder> {
   return order;
 }
 
-/* ───────────── 2E: mobile ticket ───────────── */
+/* ------------- 2E: mobile ticket ------------- */
 
 export async function fetchMobileTicket(): Promise<MobileTicketResponse> {
   const member = await currentMember();

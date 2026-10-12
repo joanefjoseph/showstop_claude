@@ -6,6 +6,7 @@ import type Database from 'better-sqlite3';
  *
  *   BTS WORLD TOUR 'ARIRANG'            → BTS/Weverse frontend (Vite :3000), ids = venue slug
  *   EPIK HIGH North America Tour '3.0'  → Epik High frontend   (Vite :4000), ids = city slug
+ *   Lil Dumplings Comedy Show            → John Smith frontend  (Vite :5000), ids = venue slug
  *
  * event_id === the id in that frontend's src/data/tourVenues.ts, so the frontend
  * can call GET /events/<id>/availability directly. Keep each list in sync with
@@ -23,6 +24,8 @@ interface TourStop {
 interface Tour {
   /** Event name prefix: `${name} — ${city}` */
   name: string;
+  /** PRESALE: only membership tiers with presale access may buy. GENERAL: any member. */
+  saleType: 'PRESALE' | 'GENERAL';
   stops: readonly TourStop[];
 }
 
@@ -57,9 +60,15 @@ const EPIK_HIGH_STOPS: readonly TourStop[] = [
   { id: 'san-diego',      city: 'San Diego',   country: 'US', venue: 'The Observatory', startsAt: '2026-10-30T03:00:00.000Z' }, // Oct. 29
 ];
 
+/* Must match the John Smith frontend's src/data/tourVenues.ts. 8 PM Eastern (EDT), stored in UTC. */
+const JOHN_SMITH_STOPS: readonly TourStop[] = [
+  { id: 'broadway-comedy-club', city: 'New York', country: 'US', venue: 'Broadway Comedy Club', startsAt: '2026-10-26T00:00:00.000Z' }, // Oct 25
+];
+
 const TOURS: readonly Tour[] = [
-  { name: "BTS WORLD TOUR 'ARIRANG'", stops: BTS_STOPS },
-  { name: "EPIK HIGH North America Tour '3.0'", stops: EPIK_HIGH_STOPS },
+  { name: "BTS WORLD TOUR 'ARIRANG'", saleType: 'PRESALE', stops: BTS_STOPS },
+  { name: "EPIK HIGH North America Tour '3.0'", saleType: 'PRESALE', stops: EPIK_HIGH_STOPS },
+  { name: 'Lil Dumplings Comedy Show', saleType: 'GENERAL', stops: JOHN_SMITH_STOPS },
 ];
 
 /** Mirrors the sections hard-coded on page 2C (same for both tours). Floor A1 = $400 + $50 fees → 2 seats = $900 (matches 2D). */
@@ -89,7 +98,7 @@ export function seedTourEvents(db: Database.Database, seededAt: string): void {
 
   const insVenue = db.prepare(`INSERT INTO venues (venue_id, name, city, country) VALUES (?, ?, ?, ?)`);
   const insEvent = db.prepare(
-    `INSERT INTO events (event_id, event_name, starts_at, venue_id, currency, last_updated) VALUES (?, ?, ?, ?, 'USD', ?)`,
+    `INSERT INTO events (event_id, event_name, starts_at, venue_id, sale_type, currency, last_updated) VALUES (?, ?, ?, ?, ?, 'USD', ?)`,
   );
   const insLevel = db.prepare(
     `INSERT INTO price_levels (price_level_id, event_id, name, face_cents, fees_cents) VALUES (?, ?, ?, ?, ?)`,
@@ -104,7 +113,7 @@ export function seedTourEvents(db: Database.Database, seededAt: string): void {
     for (const v of tour.stops) {
       const venueId = `ven_${v.id}`;
       insVenue.run(venueId, v.venue, v.city, v.country);
-      insEvent.run(v.id, `${tour.name} — ${v.city}`, v.startsAt, venueId, seededAt);
+      insEvent.run(v.id, `${tour.name} — ${v.city}`, v.startsAt, venueId, tour.saleType, seededAt);
 
       for (const s of TOUR_SECTIONS) {
         const priceLevelId = `pl_${v.id}_${s.level}`;
