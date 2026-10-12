@@ -1,0 +1,27 @@
+/* =====================================================================
+   Page shell for 2C–2E: fixed TopNav (TopNav.css) + a centred content
+   column. Replaces WeverseCommunityLayout (header, sidebar, hero, tabs,
+   membership panel).
+   ===================================================================== */
+
+.tour-page {
+  /* Inherited base the wireframes were designed against (was: .wv-community) */
+  font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
+    Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic",
+    sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #111;
+  background-color: #fff;
+
+  padding-top: var(--top-nav-height); /* Offset for the fixed TopNav */
+  min-height: 100vh;                  /* cover index.css's off-white background */
+  display: flow-root;                 /* keep the column's margins inside the white page */
+}
+
+/* Same column as 2A's .main-container */
+.tour-page-main {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 0 20px;
+}

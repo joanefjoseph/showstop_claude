@@ -38,14 +38,14 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: '0.0.0.0',
-      port: parseInt(process.env.PORT || '4000'),
+      port: parseInt(process.env.PORT || '4001'),
       strictPort: true,
       watch: { ignored: ['**/.figma/**'] },
       proxy: bridgeProxy,
     },
     preview: {
       host: '0.0.0.0',
-      port: parseInt(process.env.PORT || '4000'),
+      port: parseInt(process.env.PORT || '4001'),
       proxy: bridgeProxy,
     },
     define: {

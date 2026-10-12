@@ -1,132 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>John Smith | Stand-Up Comedy</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
-    <!-- Sticky Navigation -->
-    <header id="navbar">
-        <div class="nav-container">
-            <a href="#home" class="logo">
-                <!-- Replace with your logo file, fallback text included -->
-                <img src="logo.png" alt="John Smith Logo" onerror="this.outerHTML='<span class=\'text-logo\'>JOHN SMITH</span>'">
-            </a>
-            
-            <button class="mobile-toggle" aria-label="Toggle Menu">☰</button>
-            
-            <nav class="nav-links">
-                <a href="#shows" class="nav-link">Tour Dates</a>
-                <a href="#videos" class="nav-link">Videos</a>
-                <a href="#about" class="nav-link">About</a>
-                <a href="#contact" class="nav-link">Contact</a>
-                <a href="#shows" class="btn-primary nav-cta">Get Tickets</a>
-            </nav>
-        </div>
-    </header>
-
-    <!-- Hero Section -->
-    <section id="home" class="hero">
-        <div class="hero-overlay"></div>
-        <div class="hero-content">
-            <h1>John Smith</h1>
-            <p>Touring Comedian & Writer</p>
-            <a href="#shows" class="btn-primary hero-btn">See Upcoming Tour Dates</a>
-        </div>
-    </section>
-
-    <!-- Tour Dates / Shows Section -->
-    <section id="shows" class="section">
-        <div class="container">
-            <h2>Upcoming Shows</h2>
-            <div class="tour-list">
-                
-                <!-- Tour Date 1 -->
-                <div class="tour-item">
-                    <div class="tour-info">
-                        <span class="tour-date">Oct 25, 2026</span>
-                        <div class="tour-venue">Lil Dumplings Comedy Show <span class="tour-city">Broadway Comedy Club</span></div>
-                    </div>
-                    <a href="https://www.showstop.io/event/john-smith-nyc" class="btn-secondary" target="_blank">Buy Tickets</a>
-                </div>
-
-                <!-- Tour Date 2 -->
-                <div class="tour-item">
-                    <div class="tour-info">
-                        <span class="tour-date">Nov 19, 2026</span>
-                        <div class="tour-venue">Lil Dumplings - Thanksgiving Edition <span class="tour-city">New York, NY</span></div>
-                    </div>
-                    <button class="btn-coming-soon" disabled>Coming Soon</button>
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-    <!-- Videos Section -->
-    <section id="videos" class="section bg-darker">
-        <div class="container">
-            <h2>Watch</h2>
-            <div class="video-grid">
-                <!-- Replace src with actual YouTube/Vimeo embed links -->
-                <div class="video-wrapper">
-                    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="John Smith Comedy Clip 1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                </div>
-                <div class="video-wrapper">
-                    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="John Smith Comedy Clip 2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- About Section -->
-    <section id="about" class="section">
-        <div class="container about-grid">
-            <div class="about-image">
-                <img src="profile-pic.png" alt="John Smith Profile Picture" style="opacity: 0.7;" onerror="this.src='https://via.placeholder.com/400x500?text=Profile+Picture'">
-            </div>
-            <div class="about-text">
-                <h2>About John</h2>
-                <p>John Smith is a nationally touring stand-up comedian and writer known for his sharp observational humor and quick crowd work. He has been featured on Comedy Central, Netflix Is A Joke, and hosts the hit weekly podcast "Smithereens."</p>
-                <p>When he isn't on the road, you can catch him performing regularly at his home clubs in New York City.</p>
-                <a href="#" class="text-link">Download Press Kit (EPK) &rarr;</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer / Contact Section -->
-    <footer id="contact" class="footer">
-        <div class="container footer-grid">
-            <div class="footer-col">
-                <h3>Contact</h3>
-                <p><strong>Booking:</strong> booking@johnsmithcomedy.com</p>
-                <p><strong>Press:</strong> press@johnsmithcomedy.com</p>
-            </div>
-            <div class="footer-col">
-                <h3>Follow John</h3>
-                <div class="social-links">
-                    <a href="#">Instagram</a>
-                    <a href="#">TikTok</a>
-                    <a href="#">YouTube</a>
-                    <a href="#">X / Twitter</a>
-                </div>
-            </div>
-            <div class="footer-col">
-                <h3>Join the Mailing List</h3>
-                <form class="newsletter-form">
-                    <input type="email" placeholder="Enter your email" required>
-                    <button type="submit" class="btn-primary">Subscribe</button>
-                </form>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 John Smith Comedy. All rights reserved.</p>
-        </div>
-    </footer>
-
-    <script src="script.js"></script>
-</body>
+<!doctype html>
+<html lang="<!-- figma:lang -->">
+  <head>
+    <!-- figma:head-start -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><!-- figma:title --></title>
+    <!-- figma:head-end -->
+  </head>
+  <body>
+    <!-- figma:body-start -->
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <!-- figma:body-end -->
+  </body>
 </html>
