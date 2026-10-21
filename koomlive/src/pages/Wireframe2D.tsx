@@ -61,7 +61,6 @@ const seatsLabel =
         <span className={`hold-chip${remaining === 0 ? " is-expired" : ""}`} role="timer" aria-live="polite">
           <span aria-hidden="true">⏱</span> {holdText}
         </span>
-        <span className="api-tag">PUT /carts/:id/billing · PUT /carts/:id/commit</span>
       </div>
 
       <div className="purchase-grid">
