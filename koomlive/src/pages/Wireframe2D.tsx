@@ -7,6 +7,7 @@ import { getSession } from "../api/purchaseSession";
 import { useBridgeAction } from "../api/useBridgeAction";
 import { useCountdown, formatMMSS } from "../api/useCountdown";
 import { formatMoney } from "../api/format";
+import { isGeneralAdmissionEvent } from "../api/generalAdmission";
 
 /* Display only: the demo billing always sends the saved wallet (see purchaseFlow.ts). */
 const PAY_OPTIONS = [
@@ -23,15 +24,18 @@ export default function Wireframe2D({ params }: PageProps) {
   const nextHref = `#/2e?venue=${encodeURIComponent(venue.id)}`;
   const purchasing = pendingKey === "purchase";
 
-  const seatsLabel =
-    cart && cart.seats.length
-      ? `${cart.seats[0].section}, Row ${cart.seats[0].row}, Seats ${cart.seats.map((s) => s.seatNumber).join(", ")}`
-      : "No seats locked";
+const gaCart = !!cart && isGeneralAdmissionEvent(cart.eventId);
+const seatsLabel =
+  !cart || !cart.seats.length
+    ? "Nothing reserved"
+    : gaCart
+      ? `${cart.seats[0].section} × ${cart.seats.length}`
+      : `${cart.seats[0].section}, Row ${cart.seats[0].row}, Seats ${cart.seats.map((s) => s.seatNumber).join(", ")}`;
   const totalLabel = cart ? `${formatMoney(cart.total)} ${cart.total.currency} (incl. taxes & fees)` : "—";
   const memberLabel = member ? `${member.email} (@${member.membershipId})` : "Not verified";
 
   const summaryRows: Array<[string, string]> = [
-    ["Seats", seatsLabel],
+    [gaCart ? "Tickets" : "Seats", seatsLabel],
     ["Member Account", memberLabel],
     ["Total", totalLabel],
     ["Protection", "KOOM Member Auth + Show Stop"],
@@ -39,9 +43,9 @@ export default function Wireframe2D({ params }: PageProps) {
 
   const holdText =
     remaining === null
-      ? "Reservation: no seats locked"
+      ? "Reservation: nothing reserved"
       : remaining === 0
-        ? "Reservation expired — reserve seats again"
+        ? "Reservation expired — go back and reserve again"
         : `Reservation held: ${formatMMSS(remaining)}`;
 
   return (

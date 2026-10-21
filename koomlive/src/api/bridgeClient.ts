@@ -72,6 +72,13 @@ export const bridge = {
       body: { eventId, seatIds },
     }),
 
+  /** 3b. POST /carts/lock — general admission: the bridge picks `quantity` tickets */
+  lockTickets: (membershipId: string, eventId: string, quantity: number) =>
+    request<SeatLockResponse>("POST", "/carts/lock", {
+      headers: { "X-Membership-Id": membershipId },
+      body: { eventId, quantity },
+    }),
+
   /** 4. PUT /carts/:cartId/billing */
   attachBilling: (cartId: string, billing: BillingRequest) =>
     request<BillingResponse>("PUT", `/carts/${enc(cartId)}/billing`, { body: billing }),

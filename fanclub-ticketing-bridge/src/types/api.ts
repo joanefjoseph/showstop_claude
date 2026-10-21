@@ -10,6 +10,7 @@ export interface AvailableSeat {
 }
 export interface SectionAvailability {
   section: string;
+  generalAdmission: boolean;
   availableCount: number;
   priceRange: { min: Money; max: Money } | null;
   seats: AvailableSeat[];
@@ -19,6 +20,8 @@ export interface EventAvailabilityResponse {
   eventName: string;
   startsAt: string;
   saleType: SaleType;
+  /** True when every ticket for the event is general admission (held and sold ones included). */
+  generalAdmission: boolean;
   venue: { name: string; city: string; country: string };
   totals: { available: number; held: number; sold: number };
   sections: SectionAvailability[];

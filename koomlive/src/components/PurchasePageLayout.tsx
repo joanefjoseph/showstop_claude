@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import KoomLayout from "./KoomLayout";
 import type { TourVenue } from "../data/tourVenues";
 
-const STEPS = ["Seats", "Checkout", "Ticket"] as const;
+const STEPS = ["Select", "Checkout", "Ticket"] as const;
 
 interface PurchasePageLayoutProps {
   venue: TourVenue;

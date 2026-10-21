@@ -6,10 +6,17 @@ import { attachBilling, commitCart, lockSeats } from '../services/cartService.ts
 import type { VendorBillingRequest } from '../types/vendor.ts';
 export const cartsRouter = Router();
 const cartIdParams = z.object({ cartId: z.string().min(1).max(128) });
-const lockBody = z.object({
-  eventId: z.string().min(1).max(128),
-  seatIds: z.array(z.string().min(1)).min(1).max(50),
-});
+const lockBody = z
+  .object({
+    eventId: z.string().min(1).max(128),
+    /** Assigned seating: the exact seats to hold. */
+    seatIds: z.array(z.string().min(1)).min(1).max(50).optional(),
+    /** General admission: how many tickets to hold; the bridge picks them. */
+    quantity: z.number().int().min(1).max(50).optional(),
+  })
+  .refine((b) => (b.seatIds === undefined) !== (b.quantity === undefined), {
+    message: 'Provide either seatIds (assigned seating) or quantity (general admission), not both',
+  });
 const billingBody = z.object({
   customer: z.object({
     firstName: z.string().min(1).max(100),

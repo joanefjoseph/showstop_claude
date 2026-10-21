@@ -10,6 +10,7 @@ import { formatEventDate } from "../api/format";
 import type { MobileTicketResponse } from "../api/bridgeTypes";
 import { useCountdown } from "../api/useCountdown";
 import { getSession } from "../api/purchaseSession";
+import { isGeneralAdmissionEvent } from "../api/generalAdmission";
 
 export default function Wireframe2E({ params }: PageProps) {
   // Show passed through from 2D (#/2e?venue=<id>)
@@ -57,11 +58,20 @@ export default function Wireframe2E({ params }: PageProps) {
 
   const rotationSecondsLeft = useCountdown(ticket?.barcode.rotating ? ticket.barcode.nextRotationAt : undefined);
 
-  const seatRows: Array<[string, string]> = [
-    ["SEC", ticket?.seat.section ?? "—"],
-    ["ROW", ticket?.seat.row ?? "—"],
-    ["SEAT", ticket?.seat.seatNumber ?? "—"],
-  ];
+  const seatRows: Array<[string, string]> =
+    ticket && isGeneralAdmissionEvent(ticket.event.eventId)
+      ? [
+          ["ADMISSION", "General"],
+          ["SEATING", "Unassigned"],
+          ["TICKET NO.", ticket.seat.seatNumber],
+        ]
+      : [
+          ["SEC", ticket?.seat.section ?? "—"],
+          ["ROW", ticket?.seat.row ?? "—"],
+          ["SEAT", ticket?.seat.seatNumber ?? "—"],
+        ];
+  // the order can now hold 1–4 tickets; the page still shows the first one (as before)
+  const ticketCount = getSession().order?.ticketIds.length ?? 1;
   const eventLine = ticket
     ? `${ticket.event.venue} • ${formatEventDate(ticket.event.startsAt)}`
     : `${venue.venue} • ${venue.dateLabel}`;
@@ -82,7 +92,9 @@ export default function Wireframe2E({ params }: PageProps) {
     >
       <div className="purchase-meta">
         <span className="pill pill-dark">✓ Order confirmed</span>
-        <span className="api-tag">Ticket ID: {ticket?.ticketId ?? "…"}</span>
+        <span className="api-tag">
+          Ticket ID: {ticket?.ticketId ?? "…"}{ticketCount > 1 ? ` · 1 of ${ticketCount}` : ""}
+        </span>
       </div>
 
       <div className="purchase-grid">

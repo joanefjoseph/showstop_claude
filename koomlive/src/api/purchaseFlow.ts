@@ -1,5 +1,5 @@
 import { bridge, BridgeError } from "./bridgeClient";
-import type { BillingRequest, EventAvailabilityResponse, MobileTicketResponse } from "./bridgeTypes";
+import type { BillingRequest, EventAvailabilityResponse, MobileTicketResponse, SeatLockResponse } from "./bridgeTypes";
 import {
   getSession, updateSession,
   type LockedCart, type MemberInfo, type PlacedOrder,
@@ -38,6 +38,7 @@ export async function verifyMembership(): Promise<MemberInfo> {
     status: res.status!,
     tierId: res.tier!.tierId,
     tierName: res.tier!.name,
+    maxTicketsPerOrder: res.tier!.maxTicketsPerOrder,
     eligibleToPurchase: res.eligibleToPurchase,
     reason: res.reason,
   };
@@ -78,29 +79,10 @@ export async function loadAvailability(eventId: string): Promise<EventAvailabili
   return availability;
 }
 
-/* ------------- 2C → 2D: lock the chosen seats ------------- */
+/* ------------- 2C → 2D: hold seats (assigned) or tickets (general admission) ------------- */
 
-export async function lockSeats(eventId: string, seatIds: string[]): Promise<LockedCart> {
-  const member = await requireMember();
-
-  // Re-use the current hold if it's the same seats and still has time left
-  const existing = getSession().cart;
-  const sameSeats =
-    !!existing &&
-    existing.seats.length === seatIds.length &&
-    seatIds.every((id) => existing.seats.some((s) => s.seatId === id));
-  if (
-    existing &&
-    sameSeats &&
-    existing.eventId === eventId &&
-    existing.membershipId === member.membershipId &&
-    Date.parse(existing.holdExpiresAt) - Date.now() > 30_000
-  ) {
-    return existing;
-  }
-
-  const lock = await bridge.lockSeats(member.membershipId, eventId, seatIds);
-  const cart: LockedCart = {
+function toLockedCart(lock: SeatLockResponse, member: MemberInfo): LockedCart {
+  return {
     cartId: lock.cartId,
     eventId: lock.eventId,
     membershipId: member.membershipId,
@@ -112,6 +94,45 @@ export async function lockSeats(eventId: string, seatIds: string[]): Promise<Loc
     total: lock.totals.total,
     holdExpiresAt: lock.holdExpiresAt,
   };
+}
+
+/** This session's hold for the event and member, if it still has more than 30 s left. */
+function liveHold(eventId: string, member: MemberInfo): LockedCart | undefined {
+  const cart = getSession().cart;
+  return cart &&
+    cart.eventId === eventId &&
+    cart.membershipId === member.membershipId &&
+    Date.parse(cart.holdExpiresAt) - Date.now() > 30_000
+    ? cart
+    : undefined;
+}
+
+/** Assigned seating: hold these exact seats (re-uses the current hold if it is for the same seats). */
+export async function lockSeats(eventId: string, seatIds: string[]): Promise<LockedCart> {
+  const member = await requireMember();
+  const existing = liveHold(eventId, member);
+  if (
+    existing &&
+    existing.seats.length === seatIds.length &&
+    seatIds.every((id) => existing.seats.some((s) => s.seatId === id))
+  ) {
+    return existing;
+  }
+  const cart = toLockedCart(await bridge.lockSeats(member.membershipId, eventId, seatIds), member);
+  updateSession({ cart, order: undefined });
+  return cart;
+}
+
+/**
+ * General admission: hold `quantity` tickets; the bridge picks them. Re-uses the current
+ * hold if it is for the same quantity, so going back from checkout and forward again
+ * doesn't tie up extra tickets.
+ */
+export async function lockTickets(eventId: string, quantity: number): Promise<LockedCart> {
+  const member = await requireMember();
+  const existing = liveHold(eventId, member);
+  if (existing && existing.seats.length === quantity) return existing;
+  const cart = toLockedCart(await bridge.lockTickets(member.membershipId, eventId, quantity), member);
   updateSession({ cart, order: undefined });
   return cart;
 }

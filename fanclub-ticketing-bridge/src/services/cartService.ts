@@ -2,42 +2,55 @@ import { randomUUID } from 'node:crypto';
 import { config } from '../config.ts';
 import { ticketVendorClient } from '../clients/ticketVendorClient.ts';
 import { AppError } from '../errors.ts';
+import { isGeneralAdmissionEvent } from './availabilityService.ts';
 import type { MembershipRecord } from '../types/membership.ts';
 import type { VendorBillingRequest, VendorCart } from '../types/vendor.ts';
 import type { BillingResponse, CommitResponse, SeatLockResponse } from '../types/api.ts';
+
 const DEFAULT_MAX_TICKETS_PER_ORDER = 8;
+/** GA: how often to re-pick tickets when another buyer takes one between our read and the hold. */
+const GA_LOCK_ATTEMPTS = 3;
+
+/** Exactly one of seatIds (assigned seating) or quantity (general admission); enforced by the route schema. */
 export interface SeatLockInput {
   eventId: string;
-  seatIds: string[];
+  seatIds?: string[];
+  quantity?: number;
 }
-/** 3. Seat lock — creates a vendor cart that holds the seats for SEAT_HOLD_SECONDS (5 min). */
+
+/**
+ * 3. Seat lock — creates a vendor cart that holds the seats for SEAT_HOLD_SECONDS (5 min).
+ * Assigned seating locks the given seatIds. General admission locks `quantity` tickets
+ * chosen by the bridge, since GA tickets are interchangeable.
+ */
 export async function lockSeats(member: MembershipRecord, input: SeatLockInput): Promise<SeatLockResponse> {
+  const requested = input.seatIds?.length ?? input.quantity ?? 0;
+  if (requested < 1) {
+    throw new AppError(400, 'INVALID_LOCK_REQUEST', 'Provide seatIds or a quantity of at least 1');
+  }
   const maxSeats = member.tier.maxTicketsPerOrder ?? DEFAULT_MAX_TICKETS_PER_ORDER;
-  if (input.seatIds.length > maxSeats) {
+  if (requested > maxSeats) {
     throw new AppError(422, 'SEAT_LIMIT_EXCEEDED',
       `${member.tier.name} members may hold at most ${maxSeats} seats per order`,
-      { requested: input.seatIds.length, max: maxSeats });
+      { requested, max: maxSeats });
   }
+
   // Presale events are limited to tiers with presale access; general-sale events are open to
   // any member who passes requireMembership. The sale type is event data from the ticket vendor,
   // and anything other than an explicit GENERAL is treated as presale.
   // Only looked up when it matters, so presale-tier members skip the extra vendor call.
   if (member.tier.presaleAccess !== true) {
-    const event = await ticketVendorClient.getEvent(input.eventId);   // was getEventAvailability
+    const event = await ticketVendorClient.getEvent(input.eventId);
     if (event.saleType !== 'GENERAL') {
       throw new AppError(403, 'PRESALE_ACCESS_REQUIRED',
         `${event.eventName} is a presale event and ${member.tier.name} members do not have presale access`);
     }
   }
-  const cart = await ticketVendorClient.createCart(
-    {
-      eventId: input.eventId,
-      seatIds: [...new Set(input.seatIds)],
-      holdDurationSeconds: config.SEAT_HOLD_SECONDS,
-      partnerReference: `fanclub:${member.membershipId}:${randomUUID()}`,
-    },
-    member.membershipId,
-  );
+
+  const cart = input.seatIds
+    ? await createHold(member, input.eventId, [...new Set(input.seatIds)])
+    : await holdGeneralAdmission(member, input.eventId, requested);
+
   return {
     cartId: cart.cartId,
     eventId: cart.eventId,
@@ -54,6 +67,62 @@ export async function lockSeats(member: MembershipRecord, input: SeatLockInput):
     holdSecondsRemaining: secondsRemaining(cart),
     totals: { subtotal: cart.subtotal, fees: cart.fees, total: cart.total },
   };
+}
+
+function createHold(member: MembershipRecord, eventId: string, seatIds: string[]): Promise<VendorCart> {
+  return ticketVendorClient.createCart(
+    {
+      eventId,
+      seatIds,
+      holdDurationSeconds: config.SEAT_HOLD_SECONDS,
+      partnerReference: `fanclub:${member.membershipId}:${randomUUID()}`,
+    },
+    member.membershipId,
+  );
+}
+
+/**
+ * The vendor only holds specific seat ids, so for GA the bridge reads the live inventory,
+ * picks `quantity` random available tickets and holds them. If another buyer takes one
+ * in between (vendor 409), it re-reads and tries different tickets.
+ */
+async function holdGeneralAdmission(member: MembershipRecord, eventId: string, quantity: number): Promise<VendorCart> {
+  for (let attempt = 1; attempt <= GA_LOCK_ATTEMPTS; attempt++) {
+    const event = await ticketVendorClient.getEventAvailability(eventId);
+    if (!isGeneralAdmissionEvent(event.seats)) {
+      throw new AppError(422, 'NOT_GENERAL_ADMISSION',
+        `${event.eventName} has assigned seating; lock specific seatIds instead of a quantity`);
+    }
+    const available = event.seats.filter((s) => s.status === 'AVAILABLE').map((s) => s.seatId);
+    if (available.length < quantity) {
+      throw new AppError(409, 'TICKETS_UNAVAILABLE',
+        available.length === 0
+          ? `${event.eventName} is sold out`
+          : `Only ${available.length} ticket${available.length === 1 ? ' is' : 's are'} left for ${event.eventName}`,
+        { requested: quantity, available: available.length });
+    }
+    try {
+      return await createHold(member, eventId, pickRandom(available, quantity));
+    } catch (err) {
+      if (!isSeatConflict(err)) throw err;
+    }
+  }
+  throw new AppError(409, 'TICKETS_UNAVAILABLE', 'Tickets are selling fast and none could be held; please try again');
+}
+
+/** The vendor answers 409 SEATS_UNAVAILABLE when a seat was taken between our read and the hold. */
+function isSeatConflict(err: unknown): boolean {
+  const e = err as { status?: unknown; statusCode?: unknown; code?: unknown } | null;
+  return e?.status === 409 || e?.statusCode === 409 || e?.code === 'SEATS_UNAVAILABLE';
+}
+
+function pickRandom<T>(items: readonly T[], count: number): T[] {
+  const pool = [...items];
+  for (let i = 0; i < count; i++) {
+    const j = i + Math.floor(Math.random() * (pool.length - i));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, count);
 }
 /** 4. Attach billing info to the cart created by the seat lock. */
 export async function attachBilling(cartId: string, billing: VendorBillingRequest): Promise<BillingResponse> {

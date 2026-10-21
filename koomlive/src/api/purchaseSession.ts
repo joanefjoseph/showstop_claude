@@ -7,6 +7,7 @@ export interface MemberInfo {
   status: MembershipStatus;
   tierId: string;
   tierName: string;
+  maxTicketsPerOrder?: number;
   eligibleToPurchase: boolean;
   reason?: string;
 }

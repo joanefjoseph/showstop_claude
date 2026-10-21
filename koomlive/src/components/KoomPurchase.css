@@ -42,6 +42,19 @@
 .koom-page .seat-option.is-active{background:var(--navy);border-color:var(--navy);color:white}
 .koom-page .seat-option-seats{font-size:13px;color:var(--pink)}
 
+/* ---------- 2C: general admission ---------- */
+.koom-page .ga-ticket{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;border-radius:12px;background:var(--navy);color:white;padding:16px 18px}
+.koom-page .ga-ticket-name{display:block;font:700 20px/1.1 "Space Grotesk",Arial,sans-serif;letter-spacing:-.03em}
+.koom-page .ga-ticket-price{display:block;margin-top:6px;font:500 13px "DM Mono",monospace;color:var(--pink)}
+.koom-page .qty-stepper{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+.koom-page .qty-stepper button{display:grid;place-items:center;width:36px;height:36px;border:1px solid rgba(255,255,255,.45);border-radius:50%;background:transparent;color:white;font:500 18px/1 "DM Mono",monospace;cursor:pointer}
+.koom-page .qty-stepper button:hover:not(:disabled){background:var(--pink);border-color:var(--pink);color:var(--navy)}
+.koom-page .qty-stepper button:disabled{opacity:.35;cursor:not-allowed}
+.koom-page .qty-stepper output{min-width:32px;text-align:center;font:700 22px/1 "Space Grotesk",Arial,sans-serif}
+.koom-page .ga-total{display:flex;align-items:baseline;justify-content:space-between;gap:16px;width:100%;margin:0;border-top:1px solid rgba(10,13,54,.15);padding-top:12px}
+.koom-page .ga-total dt{font:500 11px/1.4 "DM Mono",monospace;letter-spacing:.06em;text-transform:uppercase;opacity:.65}
+.koom-page .ga-total dd{margin:0;font:700 24px/1 "Space Grotesk",Arial,sans-serif;letter-spacing:-.03em}
+
 /* ---------- 2D: checkout ---------- */
 .koom-page .hold-chip{display:inline-flex;align-items:center;gap:8px;border-radius:99px;padding:10px 16px;background:var(--navy);color:var(--pink);font:500 13px "DM Mono",monospace}
 .koom-page .hold-chip.is-expired{background:#b3261e;color:white}
