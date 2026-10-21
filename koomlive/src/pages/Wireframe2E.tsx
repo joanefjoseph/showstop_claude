@@ -11,6 +11,7 @@ import type { MobileTicketResponse } from "../api/bridgeTypes";
 import { useCountdown } from "../api/useCountdown";
 import { getSession } from "../api/purchaseSession";
 import { isGeneralAdmissionEvent } from "../api/generalAdmission";
+import { ticketTypeFor } from "../data/ticketTypes";
 
 export default function Wireframe2E({ params }: PageProps) {
   // Show passed through from 2D (#/2e?venue=<id>)
@@ -58,12 +59,14 @@ export default function Wireframe2E({ params }: PageProps) {
 
   const rotationSecondsLeft = useCountdown(ticket?.barcode.rotating ? ticket.barcode.nextRotationAt : undefined);
 
+  const gaType =
+    ticket && isGeneralAdmissionEvent(ticket.event.eventId) ? ticketTypeFor(ticket.seat.section) : null;
   const seatRows: Array<[string, string]> =
-    ticket && isGeneralAdmissionEvent(ticket.event.eventId)
+    ticket && gaType
       ? [
-          ["ADMISSION", "General"],
-          ["SEATING", "Unassigned"],
-          ["TICKET NO.", ticket.seat.seatNumber],
+          ["TYPE", gaType.section],
+          ["ACCESS", gaType.accessShort],
+          ["NO.", ticket.seat.seatNumber],
         ]
       : [
           ["SEC", ticket?.seat.section ?? "—"],
@@ -72,9 +75,13 @@ export default function Wireframe2E({ params }: PageProps) {
         ];
   // the order can now hold 1–4 tickets; the page still shows the first one (as before)
   const ticketCount = getSession().order?.ticketIds.length ?? 1;
-  const eventLine = ticket
-    ? `${ticket.event.venue} • ${formatEventDate(ticket.event.startsAt)}`
-    : `${venue.venue} • ${venue.dateLabel}`;
+  // GA tickets show the date only: day and night parts start at different times
+  const eventLine =
+    ticket && gaType
+      ? `${ticket.event.venue} • ${venue.dateLabel} • ${gaType.access}`
+      : ticket
+        ? `${ticket.event.venue} • ${formatEventDate(ticket.event.startsAt)}`
+        : `${venue.venue} • ${venue.dateLabel}`;
   const rotationText = ticket?.barcode.rotating
     ? `Live rotating barcode — refreshes every ${ticket.barcode.rotatesEverySeconds}s` +
       (rotationSecondsLeft !== null ? ` · next in ${rotationSecondsLeft}s` : "")
@@ -101,7 +108,7 @@ export default function Wireframe2E({ params }: PageProps) {
         <article className="ticket" aria-label={`${venue.showName} mobile ticket`}>
           <div className="ticket-head">
             <span className="pill">Night ticket</span>
-            <h3>{venue.showName}</h3>
+            <h3>{gaType?.name ?? venue.showName}</h3>
             <p className="ticket-line">{eventLine}</p>
           </div>
 
@@ -141,7 +148,7 @@ export default function Wireframe2E({ params }: PageProps) {
         <div className="purchase-copy">
           <div>
             <p className="eyebrow">Order confirmed</p>
-            <h3>See you on the floor.</h3>
+            <h3>{gaType && !gaType.includesConcert ? "See you at the conference." : "See you on the floor."}</h3>
           </div>
           <p className="copy">
             Show this barcode at the door. It refreshes automatically while this page is open, so keep it

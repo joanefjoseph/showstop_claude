@@ -54,6 +54,17 @@
 .koom-page .ga-total{display:flex;align-items:baseline;justify-content:space-between;gap:16px;width:100%;margin:0;border-top:1px solid rgba(10,13,54,.15);padding-top:12px}
 .koom-page .ga-total dt{font:500 11px/1.4 "DM Mono",monospace;letter-spacing:.06em;text-transform:uppercase;opacity:.65}
 .koom-page .ga-total dd{margin:0;font:700 24px/1 "Space Grotesk",Arial,sans-serif;letter-spacing:-.03em}
+.koom-page .seat-map{transition:filter .25s,opacity .25s}
+.koom-page .seat-map.is-muted{filter:grayscale(1);opacity:.4}
+.koom-page .map-caption{margin:14px 0 0;text-align:center;font:500 12px/1.5 "DM Mono",monospace;opacity:.75}
+.koom-page .ticket-type{gap:8px}
+.koom-page .ticket-type-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.koom-page .ticket-type-name{font:700 17px/1.2 "Space Grotesk",Arial,sans-serif;letter-spacing:-.02em}
+.koom-page .ticket-type-price{font:700 18px/1 "Space Grotesk",Arial,sans-serif;white-space:nowrap}
+.koom-page .ticket-type-meta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;font-size:12px;opacity:.75}
+.koom-page .seat-option.is-active .ticket-type-price{color:var(--pink)}
+.koom-page .seat-option:disabled{opacity:.45;cursor:not-allowed}
+.koom-page .seat-option:disabled:hover{border-color:rgba(10,13,54,.2)}
 
 /* ---------- 2D: checkout ---------- */
 .koom-page .hold-chip{display:inline-flex;align-items:center;gap:8px;border-radius:99px;padding:10px 16px;background:var(--navy);color:var(--pink);font:500 13px "DM Mono",monospace}

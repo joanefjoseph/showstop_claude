@@ -43,16 +43,30 @@ export async function getEventAvailability(eventId: string): Promise<EventAvaila
     bySection.set(seat.section, entry);
   }
 
-  const sections: SectionAvailability[] = [...bySection.entries()]
-    .map(([section, { seats, generalAdmission }]) => ({
+  // GA ticket types stay listed when sold out (availableCount 0, price kept)
+  const soldOutGa = new Map<string, Money | null>();
+  for (const seat of data.seats) {
+    if (seat.generalAdmission !== true || bySection.has(seat.section) || soldOutGa.has(seat.section)) continue;
+    soldOutGa.set(seat.section, priceLevels.get(seat.priceLevelId)?.total ?? null);
+  }
+
+  const sections: SectionAvailability[] = [
+    ...[...bySection.entries()].map(([section, { seats, generalAdmission }]) => ({
       section,
       generalAdmission,
       availableCount: seats.length,
       priceRange: priceRange(seats),
-      // GA tickets are counted, not listed: clients lock them by quantity and never see ids
+      // GA tickets are counted, not listed: clients lock them by { section, quantity }
       seats: generalAdmission ? [] : seats.sort(seatSort),
-    }))
-    .sort((a, b) => a.section.localeCompare(b.section, undefined, { numeric: true }));
+    })),
+    ...[...soldOutGa.entries()].map(([section, total]) => ({
+      section,
+      generalAdmission: true,
+      availableCount: 0,
+      priceRange: total ? { min: total, max: total } : null,
+      seats: [],
+    })),
+  ].sort((a, b) => a.section.localeCompare(b.section, undefined, { numeric: true }));
 
   return {
     eventId: data.eventId,

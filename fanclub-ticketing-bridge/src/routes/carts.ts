@@ -13,9 +13,15 @@ const lockBody = z
     seatIds: z.array(z.string().min(1)).min(1).max(50).optional(),
     /** General admission: how many tickets to hold; the bridge picks them. */
     quantity: z.number().int().min(1).max(50).optional(),
+    /** General admission: which ticket type (section), required when the event sells more than one. */
+    section: z.string().min(1).max(128).optional(),
   })
   .refine((b) => (b.seatIds === undefined) !== (b.quantity === undefined), {
     message: 'Provide either seatIds (assigned seating) or quantity (general admission), not both',
+  })
+  .refine((b) => b.section === undefined || b.quantity !== undefined, {
+    message: 'section only applies to quantity (general admission) locks',
+    path: ['section'],
   });
 const billingBody = z.object({
   customer: z.object({

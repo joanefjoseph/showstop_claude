@@ -7,16 +7,14 @@ import type Database from 'better-sqlite3';
  *   BTS WORLD TOUR 'ARIRANG'            → BTS/Weverse frontend (Vite :3000), ids = venue slug
  *   EPIK HIGH North America Tour '3.0'  → Epik High frontend   (Vite :4000), ids = city slug
  *   Lil Dumplings Comedy Show           → David Jin frontend   (Vite :4002), ids = venue slug
- *   KOOM Live                           → KOOM Live frontend   (Vite :4003), id  = event slug
+ *   KOOM 2026 (Stage + Live)            → KOOM Live frontend   (Vite :4003), id  = event slug
  *
- * event_id === the id in that frontend's src/data/tourVenues.ts, so the frontend
- * can call GET /events/<id>/availability directly. Keep each list in sync with
- * its frontend. Ids must be unique across ALL tours: venue, price-level and
- * seat ids are all derived from them.
+ * event_id === the id in that frontend's src/data/tourVenues.ts. Ids must be unique
+ * across ALL tours: venue, price-level and seat ids are all derived from them.
  *
- * Seating: a tour (or a single stop, via `seating`) is seeded either with
- * ASSIGNED seats (sections → rows → numbered seats, one price level per section)
- * or as GENERAL_ADMISSION (one price level and `capacity` interchangeable tickets).
+ * Seating: a tour (or a single stop, via `seating`) is seeded either with ASSIGNED
+ * seats (sections → rows → numbered seats) or as GENERAL_ADMISSION: one or more
+ * ticket types, each with its own price and number of interchangeable tickets.
  */
 
 /** One block of reserved seats: every row has seats 1..seatsPerRow at one price. */
@@ -32,16 +30,27 @@ interface AssignedSection {
   seatsPerRow: number;
 }
 
+/** One kind of general-admission ticket for an event, e.g. "Daytime Only". */
+interface GaTicketType {
+  /** Short key used in price-level and seat ids */
+  key: string;
+  /**
+   * Public label, stored as the tickets' section: the bridge reports each ticket type as
+   * its own section and buyers lock by { section, quantity }. Must match the KOOM
+   * frontend's src/data/ticketTypes.ts.
+   */
+  section: string;
+  /** Price-level (product) name */
+  name: string;
+  face: number;
+  fees: number;
+  /** Tickets on sale for this type */
+  capacity: number;
+}
+
 type Seating =
   | { kind: 'ASSIGNED'; sections: readonly AssignedSection[] }
-  | {
-      kind: 'GENERAL_ADMISSION';
-      /** Number of GA tickets on sale */
-      capacity: number;
-      /** One price for every ticket (dollars) */
-      face: number;
-      fees: number;
-    };
+  | { kind: 'GENERAL_ADMISSION'; ticketTypes: readonly GaTicketType[] };
 
 interface TourStop {
   id: string;
@@ -74,17 +83,26 @@ const ARENA_SECTIONS: readonly AssignedSection[] = [
 const ARENA_SEATING: Seating = { kind: 'ASSIGNED', sections: ARENA_SECTIONS };
 
 /**
- * General Admission. A GA ticket is still one row in `seats` (so holds, orders and
- * tickets work exactly like reserved seats), flagged general_admission = 1. The vendor
- * mock exposes that as `generalAdmission: true` on each seat and the bridge turns it
- * into `generalAdmission` on the availability response — that flag is what frontends
- * read. Section / row are display labels only; seat_number is the ticket number.
+ * General admission. A GA ticket is still one row in `seats` (so holds, orders and tickets
+ * work exactly like reserved seats), flagged general_admission = 1. The vendor mock exposes
+ * that as `generalAdmission: true`; the bridge reports GA sections by count and locks them
+ * by quantity. seat_number is the ticket number within its type.
  */
-const GA_SECTION = 'General Admission';
 const GA_ROW = 'GA';
 
-/** KOOM Live: standing concert, one price. Capacity and price are demo values. */
-const KOOM_LIVE_SEATING: Seating = { kind: 'GENERAL_ADMISSION', capacity: 500, face: 75, fees: 10 };
+/**
+ * KOOM 2026 at Terminal 5: KOOM Stage 2026 (daytime conference) and KOOM Live 2026
+ * (night concert), sold as three GA ticket types. Prices are all-in (no separate fees).
+ * Capacities are separate demo allocations per type.
+ */
+const KOOM_2026_SEATING: Seating = {
+  kind: 'GENERAL_ADMISSION',
+  ticketTypes: [
+    { key: 'day',     section: 'Daytime Only', name: 'KOOM Stage 2026 - Daytime Only', face: 37, fees: 0, capacity: 300 },
+    { key: 'night',   section: 'Night Only',   name: 'KOOM Live 2026 - Night Only',    face: 60, fees: 0, capacity: 300 },
+    { key: 'all-day', section: 'All Day Pass', name: 'KOOM 2026 - All Day Pass',       face: 85, fees: 0, capacity: 200 },
+  ],
+};
 
 /* ----------------------------------- tours ----------------------------------- */
 
@@ -124,16 +142,17 @@ const DAVID_JIN_STOPS: readonly TourStop[] = [
   { id: 'broadway-comedy-club', city: 'New York', country: 'US', venue: 'Broadway Comedy Club', startsAt: '2026-10-26T00:00:00.000Z' }, // Oct 25
 ];
 
-/* Must match the KOOM Live frontend's src/data/tourVenues.ts. 8 PM Eastern (EDT), stored in UTC. */
-const KOOM_LIVE_STOPS: readonly TourStop[] = [
-  { id: 'koom-live-terminal-5', city: 'New York', country: 'US', venue: 'Terminal 5', startsAt: '2026-10-17T00:00:00.000Z' }, // Oct 16
+/* Must match the KOOM Live frontend's src/data/tourVenues.ts. Starts with the daytime
+   conference: 10 AM Eastern (EDT), stored in UTC (placeholder start time). */
+const KOOM_2026_STOPS: readonly TourStop[] = [
+  { id: 'koom-live-terminal-5', city: 'New York', country: 'US', venue: 'Terminal 5', startsAt: '2026-10-16T14:00:00.000Z' }, // Oct 16
 ];
 
 const TOURS: readonly Tour[] = [
   { name: "BTS WORLD TOUR 'ARIRANG'",           saleType: 'PRESALE', seating: ARENA_SEATING,     stops: BTS_STOPS },
   { name: "EPIK HIGH North America Tour '3.0'", saleType: 'PRESALE', seating: ARENA_SEATING,     stops: EPIK_HIGH_STOPS },
   { name: 'Lil Dumplings Comedy Show',          saleType: 'GENERAL', seating: ARENA_SEATING,     stops: DAVID_JIN_STOPS },
-  { name: 'KOOM Live',                          saleType: 'GENERAL', seating: KOOM_LIVE_SEATING, stops: KOOM_LIVE_STOPS },
+  { name: 'KOOM 2026',                          saleType: 'GENERAL', seating: KOOM_2026_SEATING, stops: KOOM_2026_STOPS },
 ];
 
 /* ---------------------------------- seeding ---------------------------------- */
@@ -151,11 +170,22 @@ function assertValidTours(): void {
       seen.add(stop.id);
 
       const seating = stop.seating ?? tour.seating;
-      if (seating.kind === 'GENERAL_ADMISSION' && !(Number.isInteger(seating.capacity) && seating.capacity > 0)) {
-        throw new Error(`tourSeed: '${stop.id}' needs a positive whole-number GA capacity (got ${seating.capacity})`);
+      if (seating.kind === 'ASSIGNED') {
+        if (seating.sections.length === 0) throw new Error(`tourSeed: '${stop.id}' has assigned seating but no sections`);
+        continue;
       }
-      if (seating.kind === 'ASSIGNED' && seating.sections.length === 0) {
-        throw new Error(`tourSeed: '${stop.id}' has assigned seating but no sections`);
+      if (seating.ticketTypes.length === 0) throw new Error(`tourSeed: '${stop.id}' is general admission but has no ticket types`);
+      const keys = new Set<string>();
+      const sections = new Set<string>();
+      for (const t of seating.ticketTypes) {
+        if (!(Number.isInteger(t.capacity) && t.capacity > 0)) {
+          throw new Error(`tourSeed: '${stop.id}' ticket type '${t.key}' needs a positive whole-number capacity (got ${t.capacity})`);
+        }
+        if (keys.has(t.key) || sections.has(t.section)) {
+          throw new Error(`tourSeed: '${stop.id}' has a duplicate ticket type key or section ('${t.key}' / '${t.section}')`);
+        }
+        keys.add(t.key);
+        sections.add(t.section);
       }
     }
   }
@@ -192,12 +222,14 @@ export function seedTourEvents(db: Database.Database, seededAt: string): void {
     }
   };
 
-  /** General admission: one price level and `capacity` identical tickets (seat_number = ticket number). */
-  const seedGeneralAdmission = (eventId: string, ga: Extract<Seating, { kind: 'GENERAL_ADMISSION' }>): void => {
-    const priceLevelId = `pl_${eventId}_ga`;
-    insLevel.run(priceLevelId, eventId, GA_SECTION, cents(ga.face), cents(ga.fees));
-    for (let n = 1; n <= ga.capacity; n++) {
-      insSeat.run(`s_${eventId}_GA_${n}`, eventId, GA_SECTION, GA_ROW, String(n), priceLevelId, null, 1);
+  /** General admission: per ticket type, one price level and `capacity` identical tickets. */
+  const seedGeneralAdmission = (eventId: string, ticketTypes: readonly GaTicketType[]): void => {
+    for (const t of ticketTypes) {
+      const priceLevelId = `pl_${eventId}_ga_${t.key}`;
+      insLevel.run(priceLevelId, eventId, t.name, cents(t.face), cents(t.fees));
+      for (let n = 1; n <= t.capacity; n++) {
+        insSeat.run(`s_${eventId}_GA_${t.key}_${n}`, eventId, t.section, GA_ROW, String(n), priceLevelId, null, 1);
+      }
     }
   };
 
@@ -208,7 +240,7 @@ export function seedTourEvents(db: Database.Database, seededAt: string): void {
       insEvent.run(v.id, `${tour.name} — ${v.city}`, v.startsAt, venueId, tour.saleType, seededAt);
 
       const seating = v.seating ?? tour.seating;
-      if (seating.kind === 'GENERAL_ADMISSION') seedGeneralAdmission(v.id, seating);
+      if (seating.kind === 'GENERAL_ADMISSION') seedGeneralAdmission(v.id, seating.ticketTypes);
       else seedAssignedSeats(v.id, seating.sections);
     }
   }

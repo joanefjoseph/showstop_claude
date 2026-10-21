@@ -124,15 +124,16 @@ export async function lockSeats(eventId: string, seatIds: string[]): Promise<Loc
 }
 
 /**
- * General admission: hold `quantity` tickets; the bridge picks them. Re-uses the current
- * hold if it is for the same quantity, so going back from checkout and forward again
- * doesn't tie up extra tickets.
+ * General admission: hold `quantity` tickets of one type (section); the bridge picks them.
+ * Re-uses the current hold if it is for the same type and quantity.
  */
-export async function lockTickets(eventId: string, quantity: number): Promise<LockedCart> {
+export async function lockTickets(eventId: string, section: string, quantity: number): Promise<LockedCart> {
   const member = await requireMember();
   const existing = liveHold(eventId, member);
-  if (existing && existing.seats.length === quantity) return existing;
-  const cart = toLockedCart(await bridge.lockTickets(member.membershipId, eventId, quantity), member);
+  if (existing && existing.seats.length === quantity && existing.seats.every((s) => s.section === section)) {
+    return existing;
+  }
+  const cart = toLockedCart(await bridge.lockTickets(member.membershipId, eventId, section, quantity), member);
   updateSession({ cart, order: undefined });
   return cart;
 }

@@ -8,6 +8,7 @@ import { useBridgeAction } from "../api/useBridgeAction";
 import { useCountdown, formatMMSS } from "../api/useCountdown";
 import { formatMoney } from "../api/format";
 import { isGeneralAdmissionEvent } from "../api/generalAdmission";
+import { ticketTypeFor } from "../data/ticketTypes";
 
 /* Display only: the demo billing always sends the saved wallet (see purchaseFlow.ts). */
 const PAY_OPTIONS = [
@@ -29,7 +30,7 @@ const seatsLabel =
   !cart || !cart.seats.length
     ? "Nothing reserved"
     : gaCart
-      ? `${cart.seats[0].section} × ${cart.seats.length}`
+      ? `${ticketTypeFor(cart.seats[0].section).name} × ${cart.seats.length}`
       : `${cart.seats[0].section}, Row ${cart.seats[0].row}, Seats ${cart.seats.map((s) => s.seatNumber).join(", ")}`;
   const totalLabel = cart ? `${formatMoney(cart.total)} ${cart.total.currency} (incl. taxes & fees)` : "—";
   const memberLabel = member ? `${member.email} (@${member.membershipId})` : "Not verified";

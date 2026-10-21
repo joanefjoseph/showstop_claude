@@ -21,7 +21,7 @@ const DEFAULT_EVENT_ID = "koom-live-terminal-5";
 export const TOUR_VENUES: TourVenue[] = [
   {
     id: __KOOM_EVENT_ID__.trim() || DEFAULT_EVENT_ID,
-    showName: "KOOM Live",
+    showName: "KOOM 2026",
     dateLabel: "Oct 16, 2026",
     city: "New York",
     region: "NY",

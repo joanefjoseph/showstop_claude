@@ -16,6 +16,8 @@ export interface SeatLockInput {
   eventId: string;
   seatIds?: string[];
   quantity?: number;
+  /** GA ticket type (section); required when the event sells more than one */
+  section?: string;
 }
 
 /**
@@ -49,7 +51,7 @@ export async function lockSeats(member: MembershipRecord, input: SeatLockInput):
 
   const cart = input.seatIds
     ? await createHold(member, input.eventId, [...new Set(input.seatIds)])
-    : await holdGeneralAdmission(member, input.eventId, requested);
+    : await holdGeneralAdmission(member, input.eventId, requested, input.section);
 
   return {
     cartId: cart.cartId,
@@ -83,23 +85,44 @@ function createHold(member: MembershipRecord, eventId: string, seatIds: string[]
 
 /**
  * The vendor only holds specific seat ids, so for GA the bridge reads the live inventory,
- * picks `quantity` random available tickets and holds them. If another buyer takes one
- * in between (vendor 409), it re-reads and tries different tickets.
+ * picks `quantity` random available tickets of the requested ticket type (section) and
+ * holds them. If another buyer takes one in between (vendor 409), it re-reads and retries.
  */
-async function holdGeneralAdmission(member: MembershipRecord, eventId: string, quantity: number): Promise<VendorCart> {
+async function holdGeneralAdmission(
+  member: MembershipRecord,
+  eventId: string,
+  quantity: number,
+  section?: string,
+): Promise<VendorCart> {
   for (let attempt = 1; attempt <= GA_LOCK_ATTEMPTS; attempt++) {
     const event = await ticketVendorClient.getEventAvailability(eventId);
     if (!isGeneralAdmissionEvent(event.seats)) {
       throw new AppError(422, 'NOT_GENERAL_ADMISSION',
         `${event.eventName} has assigned seating; lock specific seatIds instead of a quantity`);
     }
-    const available = event.seats.filter((s) => s.status === 'AVAILABLE').map((s) => s.seatId);
+
+    // Ticket types, from every ticket (sold ones included) so a sold-out type gives 409, not 404
+    const ticketTypes = [...new Set(event.seats.map((s) => s.section))];
+    if (section === undefined && ticketTypes.length > 1) {
+      throw new AppError(400, 'SECTION_REQUIRED',
+        `${event.eventName} sells several ticket types; choose one of: ${ticketTypes.join(', ')}`,
+        { sections: ticketTypes });
+    }
+    if (section !== undefined && !ticketTypes.includes(section)) {
+      throw new AppError(404, 'SECTION_NOT_FOUND',
+        `${event.eventName} has no '${section}' tickets`, { sections: ticketTypes });
+    }
+    const type = section ?? ticketTypes[0];
+
+    const available = event.seats
+      .filter((s) => s.status === 'AVAILABLE' && s.section === type)
+      .map((s) => s.seatId);
     if (available.length < quantity) {
       throw new AppError(409, 'TICKETS_UNAVAILABLE',
         available.length === 0
-          ? `${event.eventName} is sold out`
-          : `Only ${available.length} ticket${available.length === 1 ? ' is' : 's are'} left for ${event.eventName}`,
-        { requested: quantity, available: available.length });
+          ? `${type} tickets are sold out`
+          : `Only ${available.length} ${type} ticket${available.length === 1 ? ' is' : 's are'} left`,
+        { section: type, requested: quantity, available: available.length });
     }
     try {
       return await createHold(member, eventId, pickRandom(available, quantity));
