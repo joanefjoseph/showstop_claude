@@ -14,6 +14,43 @@ cd fanclub-demo
 npm run e2e
 npm run typecheck      # optional: verifies mock responses match bridge contracts
 
+## Codebase Architecture
+
+`fanclub-demo` is the local integration environment for the bridge. It runs two mock upstream APIs backed by the same seeded SQLite database, plus a small browser console and an end-to-end purchase-flow runner.
+
+```text
+fanclub-demo/
+|--- package.json                  # Server, reset, console, e2e, and typecheck scripts
+|--- package-lock.json
+|--- tsconfig.json                 # Strict TypeScript / NodeNext configuration
+|--- .env.example                  # Mock ports/keys, database path, latency, bridge URL, console port
+|--- public/
+|   |--- index.html                # Browser API console
+|   |--- styles.css
+|--- data/
+|   |--- demo.db                   # SQLite database created and seeded by the app
+|--- src/
+    |--- server.ts                 # Opens/seeds the DB and starts both mock APIs
+    |--- config.ts                 # Loads mock and console settings
+    |--- bridgeContracts.ts        # Re-exports bridge API/vendor/membership types and barcode helper
+    |--- e2e.ts                    # Exercises the six bridge API operations
+    |--- mocks/
+    |   |--- common.ts             # Shared mock logging, latency, errors, and response helpers
+    |   |--- membershipApi.ts      # Mock membership verification and lookup API
+    |   |--- ticketVendorApi.ts    # Mock vendor availability, cart, order, and ticket API
+    |--- db/
+    |   |--- connection.ts         # SQLite connection and schema loading
+    |   |--- schema.sql            # Membership, event inventory, cart, order, and ticket tables
+    |   |--- seed.ts               # Creates the base demo records
+    |   |--- tourSeed.ts            # Seeds tour venues, events, price levels, and seats
+    |--- console/
+        |--- server.ts             # Serves the console and proxies /bridge to the configured bridge
+```
+
+The main server (`src/server.ts`) opens the database, applies initial seed data when needed (or when started with `--reset`), and starts the mock Membership API and Ticket Vendor Partner API on their configured ports. The APIs use the shared schema in `src/db/schema.sql`; `src/db/tourSeed.ts` adds the tour events and inventory consumed by the frontends and bridge.
+
+`src/bridgeContracts.ts` imports the shared API types and rotating-barcode helper from `fanclub-ticketing-bridge`, keeping the mock responses aligned with the bridge's contracts. `src/e2e.ts` drives the bridge's end-to-end purchase flow. The optional console server serves `public/` and provides a same-origin `/bridge` proxy, allowing the browser UI to call a running bridge without cross-origin requests.
+
 # Quick Verification
 ```
 cd fanclub-demo

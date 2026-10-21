@@ -61,14 +61,20 @@ const EPIK_HIGH_STOPS: readonly TourStop[] = [
 ];
 
 /* Must match the John Smith frontend's src/data/tourVenues.ts. 8 PM Eastern (EDT), stored in UTC. */
-const JOHN_SMITH_STOPS: readonly TourStop[] = [
+const DAVID_JIN_STOPS: readonly TourStop[] = [
   { id: 'broadway-comedy-club', city: 'New York', country: 'US', venue: 'Broadway Comedy Club', startsAt: '2026-10-26T00:00:00.000Z' }, // Oct 25
+];
+
+/* Must match the John Smith frontend's src/data/tourVenues.ts. 8 PM Eastern (EDT), stored in UTC. */
+const KOOM_LIVE_STOPS: readonly TourStop[] = [
+  { id: 'koom-live-terminal-5', city: 'New York', country: 'US', venue: 'Terminal 5', startsAt: '2026-10-16T12:00:00.000Z' }, // Oct 16
 ];
 
 const TOURS: readonly Tour[] = [
   { name: "BTS WORLD TOUR 'ARIRANG'", saleType: 'PRESALE', stops: BTS_STOPS },
   { name: "EPIK HIGH North America Tour '3.0'", saleType: 'PRESALE', stops: EPIK_HIGH_STOPS },
-  { name: 'Lil Dumplings Comedy Show', saleType: 'GENERAL', stops: JOHN_SMITH_STOPS },
+  { name: 'Lil Dumplings Comedy Show', saleType: 'GENERAL', stops: DAVID_JIN_STOPS },
+  { name: 'KOOM Live', saleType: 'GENERAL', stops: KOOM_LIVE_STOPS },
 ];
 
 /** Mirrors the sections hard-coded on page 2C (same for both tours). Floor A1 = $400 + $50 fees → 2 seats = $900 (matches 2D). */

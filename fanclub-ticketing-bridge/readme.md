@@ -6,6 +6,51 @@ npm install
 npm run dev            # or: npm run build && npm start
 ```
 
+## Codebase Architecture
+
+The bridge is a Node.js 18+ Express service written in TypeScript. It exposes a ticketing API while adapting requests to upstream fan-membership and ticket-vendor APIs.
+
+```text
+fanclub-ticketing-bridge/
+|--- package.json                 # Dependencies and dev/build/start/typecheck scripts
+|--- package-lock.json
+|--- tsconfig.json                # Strict TypeScript / NodeNext configuration
+|--- .env.example                 # Bridge port, upstream URLs/keys, timeouts, hold and cache settings
+|--- src/
+    |--- server.ts                # Loads config, creates and listens on the app
+    |--- app.ts                   # Express middleware and endpoint registration
+    |--- config.ts                # Validates environment configuration with Zod
+    |--- errors.ts                # Application and upstream error types
+    |--- clients/
+    |   |--- httpClient.ts        # Shared upstream HTTP and timeout handling
+    |   |--- membershipClient.ts  # Membership API adapter
+    |   |--- ticketVendorClient.ts# Ticket vendor Partner API adapter
+    |--- middleware/
+    |   |--- requestLogger.ts
+    |   |--- validate.ts          # Zod request validation
+    |   |--- requireMembership.ts # Membership lookup and purchase authorization
+    |   |--- errorHandler.ts      # Maps errors to the bridge response format
+    |--- routes/
+    |   |--- events.ts            # Event availability endpoint
+    |   |--- membership.ts        # Membership verification endpoint
+    |   |--- carts.ts              # Seat lock, billing, and commit endpoints
+    |   |--- tickets.ts            # Mobile ticket endpoint
+    |--- services/
+    |   |--- availabilityService.ts
+    |   |--- membershipService.ts
+    |   |--- cartService.ts
+    |   |--- ticketService.ts
+    |   |--- rotatingBarcode.ts   # Time-based barcode generation
+    |--- types/
+        |--- api.ts                # Public bridge request/response contracts
+        |--- membership.ts         # Membership upstream contracts
+        |--- vendor.ts             # Ticket vendor upstream contracts
+```
+
+`server.ts` starts the service, and `app.ts` wires request parsing, logging, health check, route modules, and centralized error handling. Routes validate incoming data and delegate business rules to services. Services call the upstream clients, which share the HTTP transport. Public bridge types are kept separate from vendor and membership wire types so the service layer can map upstream data to stable API responses.
+
+The API follows the purchase lifecycle: availability and membership verification; membership-authorized seat locking; billing and cart commit; then membership-authorized mobile ticket retrieval. Membership and vendor behavior, including hold expiry and idempotency, is described below. `fanclub-demo` supplies local mock upstream APIs and a seeded SQLite database for development and end-to-end verification.
+
 # End-to-End Purchase Flow
 
 ## 1. What's available?

@@ -1,0 +1,11 @@
+{
+  "title": "KOOM Week 2026, NYC — KOOM Live",
+  "description": "Where brands, people, and ideas move forward. Manhattan, NYC.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

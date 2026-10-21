@@ -1,0 +1,85 @@
+/* =====================================================================
+   Purchase flow (2C–2E), membership gate and error notes, built from the
+   landing page's pieces: navy intro band, pink fact strip, paper section,
+   lavender card, white/blue panels, DM Mono labels and pill buttons.
+   Imported after KoomLayout.css, scoped the same way.
+   ===================================================================== */
+
+/* ---------- shared ---------- */
+.koom-page .button.is-action{cursor:pointer}
+.koom-page .button[aria-busy="true"]{cursor:wait;opacity:.7}
+.koom-page .button[aria-disabled="true"]{cursor:not-allowed;opacity:.5}
+.koom-page .k-error{margin:0;max-width:100%;border:1px solid #b3261e;border-radius:9px;background:#fdecea;color:#b3261e;padding:10px 14px;font:500 12px/1.5 "DM Mono",monospace;text-align:left}
+.koom-page .ticket-action{display:flex;flex-direction:column;align-items:flex-start;gap:12px;max-width:420px}
+
+/* ---------- page frame ---------- */
+.koom-page .purchase-intro h1{font-size:clamp(46px,7vw,88px)}
+.koom-page .purchase-section{background:var(--paper);color:var(--navy);padding:clamp(50px,7vw,90px) clamp(20px,4vw,48px) clamp(65px,9vw,115px)}
+.koom-page .purchase-steps{display:flex;flex-wrap:wrap;gap:10px;list-style:none;margin:0 0 24px;padding:0}
+.koom-page .purchase-steps li{display:inline-flex;align-items:center;gap:10px;border:1px solid currentColor;border-radius:99px;padding:10px 16px;font:500 13px "DM Mono",monospace;opacity:.45}
+.koom-page .purchase-steps li span{font-size:11px;letter-spacing:.06em}
+.koom-page .purchase-steps li.is-done{opacity:.8}
+.koom-page .purchase-steps li.is-current{opacity:1;background:var(--navy);border-color:var(--navy);color:white}
+.koom-page .purchase-card{display:flex;flex-direction:column;gap:clamp(20px,3vw,28px);padding:clamp(18px,2.5vw,32px);border-radius:18px;background:var(--lavender)}
+.koom-page .purchase-card p{margin:0}
+.koom-page .purchase-card .eyebrow{margin:0 0 10px}
+.koom-page .purchase-card h3{margin:0;font:700 clamp(29px,3vw,38px)/1.05 "Space Grotesk",Arial,sans-serif;letter-spacing:-.04em}
+.koom-page .purchase-card .button{white-space:normal;text-align:left}
+.koom-page .purchase-meta{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.koom-page .api-tag{font:500 11px/1.4 "DM Mono",monospace;letter-spacing:.06em;text-transform:uppercase;opacity:.65}
+.koom-page .purchase-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(24px,4vw,48px);align-items:start}
+.koom-page .map-panel,.koom-page .purchase-panel{background:white;border-radius:9px;padding:clamp(16px,2vw,24px)}
+.koom-page .purchase-copy{display:flex;flex-direction:column;align-items:flex-start;gap:18px;min-width:0}
+.koom-page .copy{font-size:15px;line-height:1.5}
+.koom-page .status-note{font:500 12px/1.5 "DM Mono",monospace;opacity:.7}
+.koom-page .fine-print{font:500 11px/1.5 "DM Mono",monospace;opacity:.65}
+
+/* ---------- 2C: seat map + options ---------- */
+.koom-page .seat-map{display:block;width:100%;max-width:520px;height:auto;margin:0 auto}
+.koom-page .option-list{display:flex;flex-direction:column;gap:10px;width:100%}
+.koom-page .seat-option{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left;border:1px solid rgba(10,13,54,.2);border-radius:12px;background:white;color:var(--navy);padding:14px 18px;font:500 14px/1.4 "DM Mono",monospace;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.koom-page .seat-option:hover{border-color:var(--navy)}
+.koom-page .seat-option.is-active{background:var(--navy);border-color:var(--navy);color:white}
+.koom-page .seat-option-seats{font-size:13px;color:var(--pink)}
+
+/* ---------- 2D: checkout ---------- */
+.koom-page .hold-chip{display:inline-flex;align-items:center;gap:8px;border-radius:99px;padding:10px 16px;background:var(--navy);color:var(--pink);font:500 13px "DM Mono",monospace}
+.koom-page .hold-chip.is-expired{background:#b3261e;color:white}
+.koom-page .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 24px;margin:18px 0 0}
+.koom-page .summary-grid div{border-top:1px solid rgba(10,13,54,.15);padding-top:10px}
+.koom-page .summary-grid dt{margin:0 0 6px;font:500 11px "DM Mono",monospace;letter-spacing:.06em;text-transform:uppercase;opacity:.65}
+.koom-page .summary-grid dd{margin:0;font-size:15px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
+.koom-page .pay-options{display:flex;flex-direction:column;gap:8px;width:100%}
+.koom-page .pay-option{border:1px solid rgba(10,13,54,.2);border-radius:12px;background:white;padding:12px 16px;font:500 13px "DM Mono",monospace;opacity:.6}
+.koom-page .pay-option.is-active{border-color:var(--navy);opacity:1;box-shadow:inset 4px 0 0 var(--pink)}
+.koom-page .card-row{display:flex;flex-wrap:wrap;gap:8px 20px;width:100%;border-radius:12px;background:rgba(255,255,255,.55);padding:12px 16px;font:500 13px "DM Mono",monospace;opacity:.75}
+
+/* ---------- 2E: ticket ---------- */
+.koom-page .ticket{width:100%;border-radius:18px;overflow:hidden;background:var(--blue);color:white}
+.koom-page .ticket-head{display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:22px 24px;background:var(--pink);color:var(--ink)}
+.koom-page .ticket-line{font:500 12px/1.5 "DM Mono",monospace;letter-spacing:.04em;text-transform:uppercase}
+.koom-page .ticket-seats{display:flex;gap:28px;padding:16px 24px;border-bottom:1px dashed rgba(255,255,255,.3)}
+.koom-page .ticket-seats span{display:block;margin-bottom:6px;font:500 11px "DM Mono",monospace;letter-spacing:.06em;opacity:.7}
+.koom-page .ticket-seats strong{font:700 24px/1 "Space Grotesk",Arial,sans-serif}
+.koom-page .ticket-body{display:flex;flex-direction:column;gap:12px;padding:20px 24px 24px;text-align:center}
+.koom-page .ticket-note{font:500 12px/1.5 "DM Mono",monospace}
+.koom-page .ticket-note.is-accent{color:var(--pink)}
+.koom-page .ticket-value{font:500 10px/1.4 "DM Mono",monospace;opacity:.55;word-break:break-all}
+.koom-page .barcode-placeholder{border-radius:9px;background:rgba(255,255,255,.08);padding:44px 12px;font:500 12px "DM Mono",monospace;opacity:.8}
+.koom-page .ticket-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin-top:6px}
+.koom-page .barcode-frame{position:relative;overflow:hidden;border-radius:9px;background:white;padding:16px 16px 22px}
+.koom-page .barcode-canvas{display:block;margin:0 auto;max-width:100%;height:auto;image-rendering:pixelated}
+.koom-page .barcode-canvas.is-qr{max-width:180px}
+.koom-page .barcode-error{margin:8px 0 0;color:#b3261e;font:500 11px/1.4 "DM Mono",monospace}
+.koom-page .barcode-bar{position:absolute;left:0;bottom:0;height:6px;background:linear-gradient(90deg,var(--pink),#ffd6ff,var(--pink));transition:width 1s linear}
+.koom-page .venue-block{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.koom-page .venue-name{display:block;margin-bottom:4px;font:700 24px/1.1 "Space Grotesk",Arial,sans-serif;letter-spacing:-.03em}
+
+/* ---------- membership gate ---------- */
+.koom-page .gate-body{display:flex;flex-direction:column;align-items:flex-start;gap:18px}
+
+@media(max-width:760px){
+ .koom-page .purchase-grid{grid-template-columns:minmax(0,1fr)}
+ .koom-page .summary-grid{grid-template-columns:1fr}
+ .koom-page .ticket-seats{gap:20px}
+}

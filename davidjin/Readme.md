@@ -1,50 +1,60 @@
-# Run Locally
+# David Jin Comedy
 
-This project uses Vite. To run the webpage from `index.html` on port 4002:
+This folder contains a React and TypeScript single-page app built with Vite. It combines a David Jin comedy/tour site with a ticket purchase flow backed by the Show Stop ticketing bridge.
 
-1. If dependencies are not installed, run `corepack pnpm install`.
-2. Start the development server:
+## Run locally
 
-   ```powershell
-        $env:PORT='4002'; npm run dev
-   ```
+Install dependencies and start the Vite server:
 
-3. Open [http://localhost:4002/](http://localhost:4002/) in your browser. Keep the terminal open while using the page; press `Ctrl+C` in that terminal to stop the server.
+```powershell
+corepack pnpm install
+$env:PORT='4002'; npm run dev
+```
 
-The Vite configuration reads the port from the `PORT` environment variable. Set it as shown above when starting the server.
+Open [http://localhost:4002/](http://localhost:4002/). Vite defaults to port `4002`; `PORT` can override it. The app needs `EMAIL_ADDRESS` configured in its environment for membership verification. Vite proxies `/bridge` to `BRIDGE_URL`, defaulting to `http://localhost:3003`, so the ticketing bridge must also be running.
 
-## Codebase Architecture
-
-These are the files used to install dependencies, configure Vite on port 4002, and load the app served from `index.html`:
+## Architecture
 
 ```text
-project/
-|--- package.json
+davidjin/
+|--- index.html                 # HTML shell; loads the React entry point
+|--- package.json               # Scripts and React/Vite dependencies
 |--- pnpm-lock.yaml
-|--- vite.config.ts
-|--- .figma/
-        |--- make/
-                |--- site.json
-|--- index.html
+|--- vite.config.ts             # Vite, React/Tailwind plugins, site metadata,
+|                               # environment definitions, and /bridge proxy
+|--- site.json                  # Site metadata used by the Vite HTML plugin
+|--- public/
+|   |--- images/                # Site logo, profile image, and other static assets
 |--- src/
-        |--- main.tsx
-        |--- App.tsx
-        |--- index.css
-        |--- components/
-                |--- PageNav.tsx
-                |--- WeverseNavBar.tsx
-        |--- pages/
-                |--- Wireframe2A.tsx
-                |--- Wireframe2B.tsx
-                |--- Wireframe2C.tsx
-                |--- Wireframe2D.tsx
-                |--- Wireframe2E.tsx
+    |--- main.tsx               # Mounts App and imports global styles
+    |--- App.tsx                # Hash-based page selection and membership gate
+    |--- routing.ts             # Hash navigation and section scrolling helpers
+    |--- index.css              # Global styles and design tokens
+    |--- pages/
+    |   |--- Wireframe2B.tsx    # Comedy landing page, shows, and availability entry
+    |   |--- Wireframe2C.tsx    # Live seat selection and seat locking
+    |   |--- Wireframe2D.tsx    # Order summary, payment, and purchase commit
+    |   |--- Wireframe2E.tsx    # Confirmed mobile ticket and barcode
+    |--- components/
+    |   |--- ComedyLayout.tsx   # Shared navigation, footer, and site chrome
+    |   |--- ComedyLayout.css
+    |   |--- PurchasePageLayout.tsx
+    |   |--- MembershipGate.tsx # Verifies purchase-page membership access
+    |   |--- TicketBarcode.tsx  # Renders QR/PDF417 barcodes and rotation indicator
+    |   |--- BridgeErrorNote.tsx
+    |--- api/
+    |   |--- bridgeClient.ts    # Typed HTTP client for bridge endpoints
+    |   |--- bridgeTypes.ts     # Bridge request/response models
+    |   |--- purchaseFlow.ts    # Membership, availability, cart, order, and ticket flow
+    |   |--- purchaseSession.ts # Purchase state persisted in sessionStorage
+    |   |--- seatOptions.ts     # Builds adjacent seat-pair options from inventory
+    |   |--- format.ts          # Currency/date formatting helpers
+    |   |--- useBridgeAction.ts # Shared async action state and error handling
+    |   |--- useCountdown.ts
+    |--- data/
+        |--- tourVenues.ts      # On-sale show metadata used across the flow
 ```
-`package.json` and `pnpm-lock.yaml` define the project dependencies. `vite.config.ts` sets the development server port and imports `.figma/make/site.json`. Vite serves `index.html`, which loads `src/main.tsx`; that entry point mounts `App.tsx` and imports the global stylesheet. `App.tsx` renders the Weverse NavBar (with a Back button) followed by one full-page wireframe, chosen by the URL hash. Pages link forward through their main call-to-action button:
-| URL | Page | Button that leads to the next page |
-| --- | --- | --- |
-| `http://localhost:4002/#/2a` (default) | 2A: Tour Notice | "Go to Native Tour Box Office (Tickets Tab)" |
-| `http://localhost:4002/#/2b` | 2B: Tour Box Office | "Presale Active →" (either tour date) |
-| `http://localhost:4002/#/2c` | 2C: Seat Selection | "Reserve & Lock Seats (2)" |
-| `http://localhost:4002/#/2d` | 2D: Checkout | "Complete Purchase & Issue Tickets" |
-| `http://localhost:4002/#/2e` | 2E: Wallet / SafeTix | (end of flow) |
+
+`index.html` loads `src/main.tsx`, which mounts `App`. `App` reads the URL hash to render a page and applies `MembershipGate` to the purchase pages. The `#/2b`, `#/2c`, `#/2d`, and `#/2e` routes represent the show listing, seat selection, checkout, and ticket respectively; the selected venue is passed as a `venue` query parameter in the hash. The landing page verifies membership and fetches event availability before navigating to seat selection. The purchase pages use `purchaseFlow.ts` to lock seats, attach billing, commit the cart, and fetch the resulting mobile ticket. The current member, availability, cart, and order are kept in `sessionStorage` by `purchaseSession.ts`.
+
+`bridgeClient.ts` sends requests through the Vite `/bridge` proxy. It supports membership verification, event availability, seat locking, billing, cart commit, and mobile-ticket retrieval. The ticket page refreshes rotating barcode data as needed, and `TicketBarcode.tsx` renders it with `bwip-js`.

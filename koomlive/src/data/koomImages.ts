@@ -1,0 +1,1 @@
+export const koomImage = (file: string) => `${import.meta.env.BASE_URL}images/${file}`;
