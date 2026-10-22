@@ -1,12 +1,13 @@
 import type Database from 'better-sqlite3';
 
 /**
- * Four tours share this mock database — one per frontend, all served through
+ * Five tours share this mock database — one per frontend, all served through
  * the same bridge (:3003):
  *
  *   BTS WORLD TOUR 'ARIRANG'            → BTS/Weverse frontend (Vite :3000), ids = venue slug
  *   EPIK HIGH North America Tour '3.0'  → Epik High frontend   (Vite :4000), ids = city slug
  *   Lil Dumplings Comedy Show           → David Jin frontend   (Vite :4002), ids = venue slug
+ *   Jay Park 2026 World Tour            → Jay Park frontend     (Vite :4001), ids = venue slug
  *   KOOM 2026 (Stage + Live)            → KOOM Live frontend   (Vite :4003), id  = event slug
  *
  * event_id === the id in that frontend's src/data/tourVenues.ts. Ids must be unique
@@ -142,6 +143,34 @@ const DAVID_JIN_STOPS: readonly TourStop[] = [
   { id: 'broadway-comedy-club', city: 'New York', country: 'US', venue: 'Broadway Comedy Club', startsAt: '2026-10-26T00:00:00.000Z' }, // Oct 25
 ];
 
+/* Must match the Jay Park frontend's src/data/tourVenues.ts. */
+const JAY_PARK_STOPS: readonly TourStop[] = [
+  { id: 'jaypark-sao-paulo',       city: 'São Paulo',          country: 'BR', venue: 'Vibra São Paulo',                              startsAt: '2026-09-03T23:00:00.000Z' },
+  { id: 'jaypark-mexico-city-1',   city: 'Mexico City',        country: 'MX', venue: 'Auditorio BB',                                 startsAt: '2026-09-06T02:00:00.000Z' },
+  { id: 'jaypark-mexico-city-2',   city: 'Mexico City',        country: 'MX', venue: 'Auditorio BB',                                 startsAt: '2026-09-07T02:00:00.000Z' },
+  { id: 'jaypark-duluth',          city: 'Duluth',              country: 'US', venue: 'Gas South Arena',                              startsAt: '2026-09-09T00:00:00.000Z' },
+  { id: 'jaypark-washington-dc',   city: 'Washington, DC',      country: 'US', venue: 'The Anthem',                                   startsAt: '2026-09-11T00:00:00.000Z' },
+  { id: 'jaypark-new-york',        city: 'New York',            country: 'US', venue: 'Infosys Theater at Madison Square Garden',     startsAt: '2026-09-12T00:00:00.000Z' },
+  { id: 'jaypark-toronto',         city: 'Toronto',             country: 'CA', venue: 'The Theatre at Great Canadian Toronto',        startsAt: '2026-09-14T00:00:00.000Z' },
+  { id: 'jaypark-chicago',         city: 'Chicago',             country: 'US', venue: 'Aragon Ballroom',                              startsAt: '2026-09-16T01:00:00.000Z' },
+  { id: 'jaypark-dallas',          city: 'Dallas',              country: 'US', venue: 'The Bomb Factory',                             startsAt: '2026-09-18T01:00:00.000Z' },
+  { id: 'jaypark-phoenix',         city: 'Phoenix',             country: 'US', venue: 'Arizona Financial Theatre',                    startsAt: '2026-09-21T03:00:00.000Z' },
+  { id: 'jaypark-san-francisco',   city: 'San Francisco',       country: 'US', venue: 'Bill Graham Civic Auditorium',                 startsAt: '2026-09-23T03:00:00.000Z' },
+  { id: 'jaypark-seattle',         city: 'Seattle',              country: 'US', venue: 'WaMu Theater',                                startsAt: '2026-09-25T03:00:00.000Z' },
+  { id: 'jaypark-los-angeles',     city: 'Los Angeles',         country: 'US', venue: 'Shrine Auditorium & Expo Hall',                startsAt: '2026-09-27T03:00:00.000Z' },
+  { id: 'jaypark-cologne',         city: 'Cologne',             country: 'DE', venue: 'Palladium',                                    startsAt: '2026-10-04T18:00:00.000Z' },
+  { id: 'jaypark-amsterdam',       city: 'Amsterdam',           country: 'NL', venue: 'AFAS Live',                                    startsAt: '2026-10-06T18:00:00.000Z' },
+  { id: 'jaypark-berlin',          city: 'Berlin',              country: 'DE', venue: 'Uber Eats Music Hall',                         startsAt: '2026-10-08T18:00:00.000Z' },
+  { id: 'jaypark-warsaw',          city: 'Warsaw',              country: 'PL', venue: 'COS Torwar',                                   startsAt: '2026-10-10T18:00:00.000Z' },
+  { id: 'jaypark-vienna',          city: 'Vienna',              country: 'AT', venue: 'Gasometer',                                    startsAt: '2026-10-13T18:00:00.000Z' },
+  { id: 'jaypark-zurich',          city: 'Zurich',              country: 'CH', venue: 'The Hall',                                     startsAt: '2026-10-15T18:00:00.000Z' },
+  { id: 'jaypark-milan',           city: 'Milan',               country: 'IT', venue: 'Fabrique',                                     startsAt: '2026-10-17T18:00:00.000Z' },
+  { id: 'jaypark-paris',           city: 'Paris',               country: 'FR', venue: 'Zénith',                                       startsAt: '2026-10-20T18:00:00.000Z' },
+  { id: 'jaypark-esch-sur-alzette',city: 'Esch-sur-Alzette',     country: 'LU', venue: 'Rockhal',                                      startsAt: '2026-10-22T18:00:00.000Z' },
+  { id: 'jaypark-london',          city: 'London',              country: 'UK', venue: 'OVO Arena Wembley',                            startsAt: '2026-10-26T20:00:00.000Z' },
+  { id: 'jaypark-edinburgh',       city: 'Edinburgh',           country: 'UK', venue: 'Corn Exchange',                                startsAt: '2026-10-28T20:00:00.000Z' },
+];
+
 /* Must match the KOOM Live frontend's src/data/tourVenues.ts. Starts with the daytime
    conference: 10 AM Eastern (EDT), stored in UTC (placeholder start time). */
 const KOOM_2026_STOPS: readonly TourStop[] = [
@@ -152,6 +181,7 @@ const TOURS: readonly Tour[] = [
   { name: "BTS WORLD TOUR 'ARIRANG'",           saleType: 'PRESALE', seating: ARENA_SEATING,     stops: BTS_STOPS },
   { name: "EPIK HIGH North America Tour '3.0'", saleType: 'PRESALE', seating: ARENA_SEATING,     stops: EPIK_HIGH_STOPS },
   { name: 'Lil Dumplings Comedy Show',          saleType: 'GENERAL', seating: ARENA_SEATING,     stops: DAVID_JIN_STOPS },
+  { name: '2026 Jay Park World Tour [Serenades & Body Rolls] with LNGSHOT', saleType: 'PRESALE', seating: ARENA_SEATING, stops: JAY_PARK_STOPS },
   { name: 'KOOM 2026',                          saleType: 'GENERAL', seating: KOOM_2026_SEATING, stops: KOOM_2026_STOPS },
 ];
 
