@@ -28,6 +28,7 @@ const TIERS = [
 const MEMBERS = [
   { id: 'comedy_fan', email: 'funnygirl@gmail.com', status: 'ACTIVE', tier: 'tier_basic', since: '2024-08-02T00:00:00.000Z', renews: null, name: 'Rachel Lim' },
   { id: 'HeyTa_01', email: 'epikhigh_fan@gmail.com', status: 'ACTIVE', tier: 'tier_highskool', since: '2021-03-15T00:00:00.000Z', renews: '2027-03-15T00:00:00.000Z', name: 'Jeongsik Kim' },
+  { id: 'jaywalkerz_fan01', email: 'jpark_fan@gmail.com', status: 'ACTIVE', tier: 'tier_gold', since: '2021-03-15T00:00:00.000Z', renews: '2027-03-15T00:00:00.000Z', name: 'Jaebeom Park' },
   { id: 'CaratArmyStay', email: 'bts_army@gmail.com', status: 'ACTIVE', tier: 'tier_army', since: '2021-03-15T00:00:00.000Z', renews: '2027-03-15T00:00:00.000Z', name: 'Yoongi Min' },
   { id: 'mem_9f3', email: 'fan@example.com', status: 'ACTIVE', tier: 'tier_gold', since: '2021-03-14T00:00:00.000Z', renews: '2027-03-14T00:00:00.000Z', name: 'Ada Lovelace' },
   { id: 'mem_p01', email: 'platinum@example.com', status: 'ACTIVE', tier: 'tier_platinum', since: '2018-06-01T00:00:00.000Z', renews: '2027-06-01T00:00:00.000Z', name: 'Grace Hopper' },

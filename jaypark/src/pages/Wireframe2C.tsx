@@ -204,7 +204,6 @@ export default function Wireframe2C({ params }: PageProps) {
       {/* Member + route */}
       <div className="purchase-meta">
         <span>{member ? `Verified member: @${member.membershipId}` : "Member not verified"}</span>
-        <span className="api-chip">GET /events/:id/availability</span>
       </div>
 
       {/* Map + inventory */}

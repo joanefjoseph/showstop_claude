@@ -10,6 +10,7 @@ export const LANGS: Array<{ id: Lang; label: string }> = [
 ];
 
 const EN = {
+  /* ---- 2A: tour page ---- */
   eyebrow: "2026 Jay Park World Tour [Serenades & Body Rolls] with LNGSHOT",
   regions: "LATAM · North America · Europe & UK",
   tour_title: "Tour Dates",
@@ -19,8 +20,28 @@ const EN = {
   contact: "Contact",
   privacy: "Privacy Policy",
   btn_buy: "Tickets",
-  btn_checking: "Checking…",
   all: "All",
+
+  /* ---- 2B: JWalkerz presale sign-in ---- */
+  presale_title: "JWalkerz Presale",
+  presale_intro:
+    "Presale tickets are only available to members of Jay Park's official fanclub, JWalkerz. Sign in with your Melon Ticket account to continue, or join the fanclub below.",
+  presale_notice_title: "Presale only",
+  presale_notice:
+    "Only presale tickets are on sale right now, and presale is open to JWalkerz members only. General on-sale begins in {days} days.",
+  signin_title: "Member sign-in",
+  signin_sub: "Sign in to your JWalkerz membership with your Melon Ticket account.",
+  username: "Username",
+  password: "Password",
+  sign_in: "Sign in",
+  signing_in: "Signing in…",
+  signed_in_as: "Signed in as {name}",
+  continuing: "Taking you to seat selection…",
+  verified_title: "Membership verified",
+  join_title: "Join JWalkerz",
+  join_sub: "Not a member yet? Join Jay Park's official fanclub through Melon Ticket to get presale access.",
+  join_cta: "Sign up on Melon Ticket →",
+  join_poster_alt: "JWalkerz membership recruitment poster",
 };
 
 export type UiKey = keyof typeof EN;
@@ -37,8 +58,27 @@ const UI: Record<Lang, Partial<Record<UiKey, string>>> = {
     contact: "문의하기",
     privacy: "Privacy Policy",
     btn_buy: "Tickets",
-    btn_checking: "확인 중…",
     all: "전체",
+
+    presale_title: "JWalkerz 선예매",
+    presale_intro:
+      "선예매는 박재범 공식 팬클럽 회원(JWalkerz)만 이용하실 수 있습니다. Melon 티켓 계정으로 로그인하시거나, 아래에서 팬클럽에 가입해 주세요.",
+    presale_notice_title: "현재 선예매 진행 중",
+    presale_notice:
+      "현재는 선예매만 진행 중이며, 선예매는 JWalkerz 회원만 참여하실 수 있습니다. 일반 예매는 {days}일 후에 시작됩니다.",
+    signin_title: "회원 로그인",
+    signin_sub: "Melon 티켓 계정으로 로그인하여 JWalkerz 회원 인증을 진행해 주세요.",
+    username: "아이디",
+    password: "비밀번호",
+    sign_in: "로그인",
+    signing_in: "로그인 중…",
+    signed_in_as: "{name}님, 로그인되었습니다",
+    continuing: "좌석 선택 페이지로 이동합니다…",
+    verified_title: "회원 인증 완료",
+    join_title: "JWalkerz 가입하기",
+    join_sub: "아직 회원이 아니신가요? Melon 티켓에서 박재범 공식 팬클럽에 가입하고 선예매에 참여하세요.",
+    join_cta: "Melon 티켓에서 가입하기 →",
+    join_poster_alt: "JWalkerz 회원 모집 포스터",
   },
   es: {
     eyebrow: "Jay Park 2026 World Tour con LNGSHOT",
@@ -50,8 +90,27 @@ const UI: Record<Lang, Partial<Record<UiKey, string>>> = {
     contact: "Contacto",
     privacy: "Privacy Policy",
     btn_buy: "Tickets",
-    btn_checking: "Comprobando…",
     all: "Todas",
+
+    presale_title: "Preventa JWalkerz",
+    presale_intro:
+      "La preventa está disponible solo para miembros del club de fans oficial de Jay Park, JWalkerz. Inicia sesión con tu cuenta de Melon Ticket para continuar o únete al club de fans abajo.",
+    presale_notice_title: "Solo preventa",
+    presale_notice:
+      "Por ahora solo está disponible la preventa, exclusiva para miembros de JWalkerz. La venta general comienza en {days} días.",
+    signin_title: "Acceso de miembros",
+    signin_sub: "Inicia sesión en tu membresía JWalkerz con tu cuenta de Melon Ticket.",
+    username: "Usuario",
+    password: "Contraseña",
+    sign_in: "Iniciar sesión",
+    signing_in: "Iniciando sesión…",
+    signed_in_as: "Sesión iniciada como {name}",
+    continuing: "Te llevamos a la selección de asientos…",
+    verified_title: "Membresía verificada",
+    join_title: "Únete a JWalkerz",
+    join_sub: "¿Aún no eres miembro? Únete al club de fans oficial de Jay Park a través de Melon Ticket para acceder a la preventa.",
+    join_cta: "Regístrate en Melon Ticket →",
+    join_poster_alt: "Póster de reclutamiento de miembros de JWalkerz",
   },
 };
 
@@ -61,9 +120,11 @@ export const REGION_LABELS: Record<Lang, Record<TourRegion, string>> = {
   es: { latam: "Latinoamérica", na: "Norteamérica", eu: "Europa y RU" },
 };
 
-/** UI string for `lang`, falling back to English. */
-export function t(lang: Lang, key: UiKey): string {
-  return UI[lang][key] || EN[key];
+/** UI string for `lang` (falling back to English), with {placeholders} filled from `vars`. */
+export function t(lang: Lang, key: UiKey, vars?: Record<string, string | number>): string {
+  const text = UI[lang][key] || EN[key];
+  if (!vars) return text;
+  return text.replace(/\{(\w+)\}/g, (match, name: string) => (name in vars ? String(vars[name]) : match));
 }
 
 /* ------------- shared language state (persisted like the original page) ------------- */

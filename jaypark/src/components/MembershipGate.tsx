@@ -1,43 +1,35 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { cachedMember, requireMember } from "../api/purchaseFlow";
-import { describeError } from "../api/bridgeClient";
-import BridgeErrorNote from "./BridgeErrorNote";
+import { useEffect, type ReactNode } from "react";
+import { cachedMember } from "../api/purchaseFlow";
+import { findVenue } from "../data/tourVenues";
+import { navigate } from "../routing";
 
 /**
- * Route guard for the purchase pages (2C–2E). Those pages read the member from the
- * session while rendering, so this makes sure EMAIL_ADDRESS has been verified first
- * (e.g. after a refresh or a deep link). No tier or presale rules.
+ * Route guard for the purchase pages (2C–2E). Nobody reaches them without signing in on 2B:
+ * if the session has no verified, eligible member for EMAIL_ADDRESS (fresh tab, deep link,
+ * or after "Sign out"), the visitor is sent to 2B's sign-in for the same stop.
  */
-export default function MembershipGate({ children }: { children: ReactNode }) {
-  // Render immediately when the member is already verified (no flash, no extra call)
-  const [ready, setReady] = useState(() => cachedMember()?.eligibleToPurchase === true);
-  const [error, setError] = useState<string | null>(null);
+export default function MembershipGate({
+  venueId,
+  children,
+}: {
+  venueId: string | null;
+  children: ReactNode;
+}) {
+  const signedIn = cachedMember()?.eligibleToPurchase === true;
+  const signInHref = `#/2b?venue=${findVenue(venueId).id}`;
 
   useEffect(() => {
-    if (ready) return;
-    let cancelled = false;
-    requireMember()
-      .then(() => { if (!cancelled) setReady(true); })
-      .catch((err) => { if (!cancelled) setError(describeError(err)); });
-    return () => { cancelled = true; };
-  }, [ready]);
+    // replace, so Back from the sign-in page doesn't bounce straight back here
+    if (!signedIn) navigate(signInHref, { replace: true });
+  }, [signedIn, signInHref]);
 
-  if (ready) return <>{children}</>;
+  if (signedIn) return <>{children}</>;
 
   return (
     <div className="gate-wrap">
       <div className="gate-card">
         <h2>Membership</h2>
-        {error ? (
-          <>
-            <BridgeErrorNote message={error} />
-            <p style={{ marginTop: 18 }}>
-              <a href="#/2b">← Back to tour dates</a>
-            </p>
-          </>
-        ) : (
-          <p>Verifying membership…</p>
-        )}
+        <p>Redirecting to member sign-in…</p>
       </div>
     </div>
   );

@@ -972,3 +972,209 @@ footer a:hover {
     grid-template-columns: 1fr;
   }
 }
+/* =====================================================================
+   2B: JWalkerz presale sign-in
+   ===================================================================== */
+.presale .purchase-panel {
+  margin: 0 auto 28px;
+}
+.presale-notice {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 22px;
+  background: var(--bg-mid);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.presale-notice strong {
+  font-family: "Druk Wide";
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 11px;
+  color: var(--ink);
+}
+.member-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 22px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.member-card {
+  display: flex;
+  flex-direction: column;
+  padding: 26px;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.08);
+  color: var(--ink);
+  text-decoration: none;
+}
+.member-card h3 {
+  font-family: "Druk Wide";
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: clamp(16px, 2.4vw, 20px);
+  line-height: 1.2;
+  margin: 0 0 8px;
+}
+.card-sub {
+  margin: 0 0 18px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.field {
+  display: block;
+  margin: 0 0 12px;
+}
+.field span {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 6px;
+}
+.field input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 14px 16px;
+  background: var(--bg-mid);
+  color: var(--ink);
+  font:
+    700 15px "Montserrat",
+    system-ui,
+    sans-serif;
+  outline: none;
+}
+.field input[type="password"] {
+  letter-spacing: 4px;
+}
+.field input:focus {
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.12);
+}
+.member-card form .purchase-cta {
+  margin-top: 6px;
+}
+.signed-in-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+.signed-in-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+.signed-in-meta {
+  margin-top: 4px;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  color: var(--ink-soft);
+}
+.join-card {
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+.join-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.14);
+}
+.join-poster {
+  overflow: hidden;
+  margin: 0 0 18px;
+  border-radius: 12px;
+  background: var(--bg-mid);
+}
+.join-poster img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 420px;
+  object-fit: contain;
+}
+.join-poster-fallback {
+  padding: 70px 12px;
+  text-align: center;
+  font-family: "Druk Wide";
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-soft);
+}
+.join-cta {
+  align-self: center;
+  margin-top: auto;
+}
+@media (max-width: 560px) {
+  .member-card {
+    padding: 20px;
+  }
+  .presale-notice {
+    padding: 12px 16px;
+  }
+}
+/* 2B: sign-in confirmation pop-up (same look as the original page's gate overlay) */
+.signin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(4px);
+  animation: overlay-in 0.2s ease;
+}
+.signin-overlay .gate-card {
+  animation: overlay-pop 0.35s ease;
+}
+.signin-overlay .gate-card:focus {
+  outline: none;
+}
+.signin-overlay .gate-card h2 {
+  font-size: clamp(18px, 4vw, 24px);
+  line-height: 1.15;
+}
+.signin-overlay-note {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.ticket-btn:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes overlay-pop {
+  0% {
+    transform: scale(0.9);
+  }
+  45% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

@@ -6,9 +6,14 @@ export interface PageProps {
   params: URLSearchParams;
 }
 
-/** Programmatic navigation; App's hashchange listener picks it up. */
-export function navigate(hash: string): void {
-  window.location.hash = hash.replace(/^#/, "");
+/**
+ * Programmatic navigation; App's hashchange listener picks it up.
+ * `replace` swaps the current history entry (used for redirects, so Back doesn't bounce).
+ */
+export function navigate(hash: string, options: { replace?: boolean } = {}): void {
+  const bare = hash.replace(/^#/, "");
+  if (options.replace) window.location.replace(`#${bare}`);
+  else window.location.hash = bare;
 }
 
 /** Smooth-scrolls to a section on the current page (no fixed navbar on this site). False if it isn't on this page. */
@@ -19,7 +24,7 @@ export function scrollToSection(id: string): boolean {
   return true;
 }
 
-/** "#section" links: scroll if the section is on this page, otherwise open the landing page (2B) at it. */
+/** "#section" links: scroll if the section is on this page, otherwise open the landing page (2A) at it. */
 export function goToSection(id: string): void {
-  if (!scrollToSection(id)) navigate(`#/2b?section=${encodeURIComponent(id)}`);
+  if (!scrollToSection(id)) navigate(`#/2a?section=${encodeURIComponent(id)}`);
 }

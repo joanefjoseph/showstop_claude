@@ -50,6 +50,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       __EMAIL_ADDRESS__: JSON.stringify(env.EMAIL_ADDRESS ?? ""),
+      __MELON_USERNAME__: JSON.stringify(env.MELON_USERNAME ?? ""),
     },
   }
 })

@@ -7,8 +7,8 @@ import { dateLabel, type TourVenue } from "../data/tourVenues";
 const STEPS = ["Seats", "Checkout", "Ticket"];
 
 /**
- * Page shell for 2C–2E: the tour chrome around a centred card, headed by the
- * stop picked on 2B (same row as its 2B listing) and a three-step indicator.
+ * Page shell for 2B–2E: the tour chrome around a centred card, headed by the
+ * stop picked on 2A (same row as its 2A listing) and a three-step indicator.
  */
 export default function PurchasePageLayout({
   venue,
@@ -33,7 +33,7 @@ export default function PurchasePageLayout({
       }
     >
       <section className="purchase wrap">
-        <a href="#/2b" className="purchase-logo-link" aria-label="Back to the tour page">
+        <a href="#/2a" className="purchase-logo-link" aria-label="Back to the tour page">
           <img
             className="purchase-logo"
             src={IMG.logo}
