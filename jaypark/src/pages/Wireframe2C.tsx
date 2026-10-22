@@ -14,7 +14,15 @@ type Pt = [number, number];
 type Tier = "floor" | "lower" | "upper";
 
 const BAND = 24; // thickness of each U
-const FILL: Record<Tier, string> = { floor: "#d2d2d2", lower: "#dedede", upper: "#e8e8e8" };
+/** Blue / blue-grey shades per level; neighbouring sections alternate shades so they read as separate blocks. */
+const FILLS: Record<Tier, [string, string]> = {
+  floor: ["#8fa9d1", "#a6bbdb"], // mid blue, closest to the stage
+  lower: ["#bccde6", "#cdd9ec"], // light blue (inner U)
+  upper: ["#cfd6e0", "#dde2e9"], // blue-grey (outer U)
+};
+const fillFor = (tier: Tier, i: number) => FILLS[tier][i % 2];
+const ACTIVE_FILL = "var(--accent-blue)"; // selected section
+const LABEL_FILL = "#1b2c4a"; // section labels on the blue shades
 
 /* Geometry (viewBox units). Stage at the top, everything centred on x = 150. */
 const STAGE = { x: 110, y: 8, w: 80, h: 18 };
@@ -104,13 +112,13 @@ function SeatMap({ sections, selectedSection }: { sections: SectionAvailability[
             fill="none"
             strokeWidth={BAND}
             strokeLinejoin="round"
-            style={{ stroke: active ? "var(--accent)" : FILL[tier] }}
+            style={{ stroke: active ? ACTIVE_FILL : fillFor(tier, i) }}
           />
           <text
             {...textProps}
             x={x}
             y={y}
-            fill={active ? "#fff" : "#555"}
+            fill={active ? "#fff" : LABEL_FILL}
             transform={mid.vertical ? `rotate(-90 ${x} ${y})` : undefined}
           >
             {label(s)}
@@ -142,9 +150,9 @@ function SeatMap({ sections, selectedSection }: { sections: SectionAvailability[
           <g key={s.section}>
             <rect
               x={x} y={FLOOR.y} width={floorW} height={FLOOR.h} rx={2}
-              style={{ fill: active ? "var(--accent)" : FILL.floor }}
+              style={{ fill: active ? ACTIVE_FILL : fillFor("floor", i) }}
             />
-            <text {...textProps} x={x + floorW / 2} y={FLOOR.y + FLOOR.h / 2} fill={active ? "#fff" : "#555"}>
+            <text {...textProps} x={x + floorW / 2} y={FLOOR.y + FLOOR.h / 2} fill={active ? "#fff" : LABEL_FILL}>
               {label(s)}
             </text>
           </g>

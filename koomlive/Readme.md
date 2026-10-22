@@ -264,7 +264,7 @@ rm fanclub-demo/data/demo.db                   # Linux / macOS
 Remove-Item fanclub-demo\data\demo.db          # Windows
 ```
 
-To clear the app's in-browser purchase state, close the tab or remove the `weverse-purchase-session` key from Session Storage in the browser dev tools.
+To clear the app's in-browser purchase state, close the tab or remove the `purchase-session` key from Session Storage in the browser dev tools.
 
 ---
 

@@ -37,18 +37,23 @@ export default function Wireframe2D({ params }: PageProps) {
     ["Protection", "JWalkerz Fan Auth + Show Stop"],
   ];
 
-  const holdText =
-    remaining === null
-      ? "Reservation: no seats locked"
-      : remaining === 0
-        ? "Reservation expired — reserve seats again"
-        : `Reservation Held: ${formatMMSS(remaining)}`;
+  // Only the mm:ss digits are blue; the expired message keeps the red pill
+  const holdLabel =
+    remaining === null ? (
+      "Reservation: no seats locked"
+    ) : remaining === 0 ? (
+      "Reservation expired — reserve seats again"
+    ) : (
+      <>
+        Reservation Held: <span className="hold-time">{formatMMSS(remaining)}</span>
+      </>
+    );
 
   return (
     <PurchasePageLayout venue={venue} step={2}>
       {/* Live hold countdown */}
       <div className="hold-row">
-        <div className={remaining === 0 ? "hold-pill expired" : "hold-pill"}>{holdText}</div>
+        <div className={remaining === 0 ? "hold-pill expired" : "hold-pill"}>{holdLabel}</div>
       </div>
 
       <div className="purchase-body">

@@ -39,6 +39,12 @@
   --line: rgba(0, 0, 0, 0.18);
   --maxw: 1120px;
   --danger: #b3261e; /* new: bridge errors and expired holds */
+  /* Accent palette: purchase flow (2B–2E) only, never used on 2A */
+  --accent-blue: #1d3c78;
+  --accent-blue-dark: #162d57;
+  --accent-blue-mid: #3b63a6;
+  --accent-blue-soft: #e9eff8;
+  --accent-green: #1e6b47;
 }
 
 * {
@@ -863,6 +869,7 @@ footer a:hover {
 .ticket-seat .v {
   font-family: "Druk Wide";
   font-size: 14px;
+  color: var(--accent-blue);
 }
 .ticket-body {
   padding: 16px 18px;
@@ -1177,4 +1184,60 @@ footer a:hover {
   100% {
     transform: scale(1);
   }
+}
+/* =====================================================================
+   Colour accents: 2B–2E only. None of these selectors appear on 2A,
+   which stays identical to the original tour page.
+   ===================================================================== */
+
+/* 2B: presale callout + sign-in confirmation */
+.presale-notice {
+  background: var(--accent-blue-soft);
+  box-shadow: inset 3px 0 0 var(--accent-blue);
+}
+.presale-notice strong {
+  color: var(--accent-blue);
+}
+.signed-in-mark {
+  background: var(--accent-green);
+}
+
+/* 2C (and 2D's "Payment Method"): sub-headings */
+.purchase-sub {
+  color: var(--accent-blue);
+}
+
+/* 2C: selected seat option matches the highlighted section on the map */
+.seat-option[aria-pressed="true"] {
+  border-color: var(--accent-blue);
+  box-shadow: inset 0 0 0 1px var(--accent-blue);
+  background: var(--accent-blue-soft);
+}
+.seat-option .picked {
+  color: var(--accent-blue);
+}
+
+/* 2D: hold countdown, summary labels, selected payment method */
+.hold-time {
+  color: var(--accent-blue);
+  font-weight: 700;
+}
+.summary-item .k {
+  color: var(--accent-blue);
+  font-weight: 700;
+}
+.pay-option.active {
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  box-shadow: inset 0 0 0 1px var(--accent-blue);
+  background: var(--accent-blue-soft);
+}
+.pay-option.active::before {
+  background: var(--accent-blue);
+  box-shadow: inset 0 0 0 2px var(--accent-blue-soft);
+}
+
+/* 2E: rotation bar + merch button */
+.barcode-bar {
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-blue-mid));
 }

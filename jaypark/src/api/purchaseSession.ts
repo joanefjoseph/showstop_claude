@@ -37,7 +37,7 @@ export interface PurchaseSession {
   order?: PlacedOrder;                       // from 2D
 }
 
-const KEY = "weverse-purchase-session";
+const KEY = "purchase-session";
 
 export function getSession(): PurchaseSession {
   try {
