@@ -1,2 +1,11 @@
 ## PDF generated files
 *_pdfs/
+node_modules/
+dist/
+.env
+*.db
+*.db-wal
+*.db-shm
+work/
+playwright-report/
+test-results/

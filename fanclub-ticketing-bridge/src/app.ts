@@ -8,7 +8,8 @@ import { ticketsRouter } from './routes/tickets.ts';
 export function createApp() {
   const app = express();
   app.disable('x-powered-by');
-  app.set('trust proxy', true);
+  app.set('trust proxy', false);
+  app.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
   app.use(express.json({ limit: '64kb' }));
   app.use(requestLogger);
   app.get('/health', (_req, res) => res.json({ status: 'ok', uptimeSeconds: Math.floor(process.uptime()) }));

@@ -366,7 +366,7 @@ onSubmit('billing', async (fd) => {
       method: val(fd, 'method'),
     },
   };
-  const res = await callBridge({ method: 'PUT', path: `/carts/${encodeURIComponent(val(fd, 'cartId'))}/billing`, body });
+  const res = await callBridge({ method: 'PUT', path: `/carts/${encodeURIComponent(val(fd, 'cartId'))}/billing`, headers: { 'X-Membership-Id': state.membershipId }, body });
   renderResult('billing', res, renderBilling);
 });
 /* ────────────────────────── 5. commit ────────────────────────── */
@@ -401,7 +401,7 @@ $('#gen-key').addEventListener('click', () => {
   flash(input);
 });
 onSubmit('commit', async (fd) => {
-  const headers = {};
+  const headers = { 'X-Membership-Id': state.membershipId };
   const key = val(fd, 'idempotencyKey');
   if (key) headers['Idempotency-Key'] = key;
   const res = await callBridge({ method: 'PUT', path: `/carts/${encodeURIComponent(val(fd, 'cartId'))}/commit`, headers });

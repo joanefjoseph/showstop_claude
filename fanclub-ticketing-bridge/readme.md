@@ -1,3 +1,5 @@
+> **Weverse sales sandbox:** Start all services and the polished frontend from the repository root with `npm ci`, then `npm run demo`. Open http://127.0.0.1:4000. See [the sandbox guide](../SANDBOX.md) for the five-minute sales script, test commands, and production boundaries. Billing and commit now require the cart owner's `X-Membership-Id`. The original reference material below describes the independently run services.
+
 # Running It
 
 ```
@@ -73,6 +75,7 @@ curl -X POST localhost:3003/carts/lock \
 ## 4. Attach billing (tokenised payment only)
 ```
 curl -X PUT localhost:3003/carts/cart_abc/billing \
+  -H 'X-Membership-Id: mem_9f3' \
   -H 'Content-Type: application/json' \
   -d '{"customer":{"firstName":"Ada","lastName":"Lovelace","email":"fan@example.com"},
        "address":{"line1":"1 Main St","city":"Austin","region":"TX","postalCode":"78701","country":"US"},
@@ -80,8 +83,9 @@ curl -X PUT localhost:3003/carts/cart_abc/billing \
 ```
 ## 5. Commit → order + ticket IDs
 ```
-curl -X PUT localhost:3003/carts/cart_abc/commit -H
-'Idempotency-Key: order-attempt-1'
+curl -X PUT localhost:3003/carts/cart_abc/commit \
+  -H 'X-Membership-Id: mem_9f3' \
+  -H 'Idempotency-Key: order-attempt-1'
 # → { "orderId":"ord_77", "tickets":[{"ticketId":"tkt_1","mobileTicketUrl":"/tickets/tkt_1"},...] }
 ```
 ## 6. Mobile ticket with rotating barcode (poll again after `nextRotationAt`)

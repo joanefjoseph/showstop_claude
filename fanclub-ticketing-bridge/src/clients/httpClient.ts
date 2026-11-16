@@ -29,6 +29,7 @@ export class HttpClient {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.opts.timeoutMs);
     let res: Response;
+    let text: string;
     try {
       res = await fetch(url, {
         method,
@@ -41,6 +42,7 @@ export class HttpClient {
         body: o.body !== undefined ? JSON.stringify(o.body) : undefined,
         signal: controller.signal,
       });
+      text = await res.text();
     } catch (err) {
       const aborted = (err as Error).name === 'AbortError';
       throw new UpstreamError(
@@ -53,10 +55,12 @@ export class HttpClient {
     } finally {
       clearTimeout(timer);
     }
-    const text = await res.text();
     const json = text ? safeJson(text) : undefined;
     if (!res.ok) {
       throw this.mapError(res.status, json ?? text, method, url.pathname);
+    }
+    if (json === undefined) {
+      throw new UpstreamError(this.opts.name, 502, 'UPSTREAM_INVALID_RESPONSE', `${this.opts.name} returned invalid JSON`);
     }
     return json as T;
   }
