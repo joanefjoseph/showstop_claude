@@ -18,6 +18,8 @@ export default function Wireframe2E({ params }: PageProps) {
   // Logged-in member's handle, built the same way as on 2A.
   // PresaleGate only renders this page once the member is verified and cached in the session.
   const member = getSession().member;
+  const order = getSession().order;
+  const [ticketIndex, setTicketIndex] = useState(0);
   const handle = member ? `@${member.membershipId}` : "unverified";
 
   // GET /tickets/:ticketId — the bridge derives a fresh rotating value on every call,
@@ -25,13 +27,14 @@ export default function Wireframe2E({ params }: PageProps) {
   const [ticket, setTicket] = useState<MobileTicketResponse | null>(null);
   const [ticketError, setTicketError] = useState<string | null>(null);
   useEffect(() => {
+    setTicket(null);
     let cancelled = false;
     let timer: number | undefined;
     let hadTicket = false;
 
     const load = async () => {
       try {
-        const t = await fetchMobileTicket();
+        const t = await fetchMobileTicket(ticketIndex);
         if (cancelled) return;
         hadTicket = true;
         setTicket(t);
@@ -45,7 +48,7 @@ export default function Wireframe2E({ params }: PageProps) {
         if (cancelled) return;
         setTicketError(describeError(err));
         // A refresh failed after we already showed a ticket → keep trying; first-load failures stop here
-        if (hadTicket) timer = window.setTimeout(load, 5000);
+        timer = window.setTimeout(load, 5000);
       }
     };
 
@@ -54,7 +57,7 @@ export default function Wireframe2E({ params }: PageProps) {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, []);
+  }, [ticketIndex]);
 
   const rotationSecondsLeft = useCountdown(
     ticket?.barcode.rotating ? ticket.barcode.nextRotationAt : undefined,
@@ -72,6 +75,8 @@ export default function Wireframe2E({ params }: PageProps) {
   return (
     <WeverseCommunityLayout>
       <div style={{ padding: "14px 16px", background: "#fff" }}>
+        {(order?.ticketIds.length ?? 0) > 1 && <div style={{display:"flex",gap:8,marginBottom:12}}>{order!.ticketIds.map((id,i)=><button key={id} type="button" aria-pressed={ticketIndex===i} onClick={()=>setTicketIndex(i)} style={{fontSize:11,padding:"6px 12px",border:"1px solid var(--border)",background:i===ticketIndex?"#f0f5ff":"#fff",color:"var(--accent)"}}>Ticket {i+1}</button>)}</div>}
+        {!order && <a href="#/2b">Browse available shows</a>}
         {/* Confirmation banner — shows the ticket ID attached to the barcode */}
         <div
           style={{
@@ -84,7 +89,7 @@ export default function Wireframe2E({ params }: PageProps) {
             gap: 8,
           }}
         >
-          🎉 ORDER CONFIRMED!
+          {order ? "🎉 ORDER CONFIRMED!" : "Your tickets"}
           <span className="font-mono-display" style={{ fontSize: 10, color: "var(--ink-muted)", fontWeight: 400 }}>
             Ticket ID: {ticket?.ticketId ?? "…"}
           </span>
@@ -129,7 +134,7 @@ export default function Wireframe2E({ params }: PageProps) {
 
           {/* Barcode area — real barcode from GET /tickets/:ticketId */}
           <div style={{ padding: "12px 14px", textAlign: "center" }}>
-            {ticket ? (
+            {ticket && (!ticket.barcode.rotating || (rotationSecondsLeft ?? 0) > 0) ? (
               <TicketBarcode barcode={ticket.barcode} />
             ) : (
               <div
@@ -149,11 +154,11 @@ export default function Wireframe2E({ params }: PageProps) {
 
             <div className="font-mono-display" style={{ fontSize: 9, color: "var(--accent)", marginBottom: 4 }}>
               {ticket?.barcode.rotating
-                ? `🔵 Blue Bar Rotating (Ticketmaster SafeTix™) — Updates every ${ticket.barcode.rotatesEverySeconds}s` +
+                ? `🔵 Rotating barcode — Updates every ${ticket.barcode.rotatesEverySeconds}s` +
                   (rotationSecondsLeft !== null ? ` · next in ${rotationSecondsLeft}s` : "")
                 : ticket
                   ? "Static barcode — does not rotate"
-                  : "🔵 Blue Bar Rotating (Ticketmaster SafeTix™)"}
+                  : "🔵 Rotating barcode"}
             </div>
             {ticket && (
               <div
@@ -166,7 +171,7 @@ export default function Wireframe2E({ params }: PageProps) {
             <BridgeErrorNote message={ticketError} />
 
             <div className="font-mono-display" style={{ fontSize: 10, color: "var(--ink-muted)", marginBottom: 10 }}>
-              Fan: {handle} | Verified Device ID: #iPhone16-A92B
+              Fan: {handle}
             </div>
 
             <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>

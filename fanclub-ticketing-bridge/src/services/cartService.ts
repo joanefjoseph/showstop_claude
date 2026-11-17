@@ -148,8 +148,8 @@ function pickRandom<T>(items: readonly T[], count: number): T[] {
   return pool.slice(0, count);
 }
 /** 4. Attach billing info to the cart created by the seat lock. */
-export async function attachBilling(cartId: string, billing: VendorBillingRequest): Promise<BillingResponse> {
-  const cart = await ticketVendorClient.updateBilling(cartId, billing);
+export async function attachBilling(cartId: string, billing: VendorBillingRequest, membershipId: string): Promise<BillingResponse> {
+  const cart = await ticketVendorClient.updateBilling(cartId, billing, membershipId);
   assertCartOpen(cart);
   return {
     cartId: cart.cartId,
@@ -160,8 +160,8 @@ export async function attachBilling(cartId: string, billing: VendorBillingReques
   };
 }
 /** 5. Commit — finalises the purchase; the vendor releases temp holds and marks seats sold. */
-export async function commitCart(cartId: string, idempotencyKey?: string): Promise<CommitResponse> {
-  const order = await ticketVendorClient.commitCart(cartId, idempotencyKey ?? `commit:${cartId}`);
+export async function commitCart(cartId: string, idempotencyKey: string | undefined, membershipId: string): Promise<CommitResponse> {
+  const order = await ticketVendorClient.commitCart(cartId, idempotencyKey ?? `commit:${cartId}`, membershipId);
   if (order.status === 'FAILED') {
     throw new AppError(402, 'PAYMENT_FAILED', 'The ticket vendor could not complete the payment', { orderId: order.orderId });
   }

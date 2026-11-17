@@ -29,7 +29,7 @@ export default function Wireframe2D({ params }: PageProps) {
     ["Seats", seatsLabel],
     ["Fan Account", fanLabel],
     ["Total", totalLabel],
-    ["Protection", "Weverse Fan Auth + Show Stop"],
+    ["Protection", "Weverse Fan Authentication"],
   ];
 
   const holdText =
@@ -134,6 +134,7 @@ export default function Wireframe2D({ params }: PageProps) {
           href={nextHref}
           onClick={(e) => {
             e.preventDefault();
+            if (remaining === 0 || !cart) { window.location.hash = `#/2c?venue=${venue.id}`; return; }
             void run("purchase", completePurchase, nextHref);
           }}
           aria-busy={pendingKey === "purchase"}
@@ -152,7 +153,7 @@ export default function Wireframe2D({ params }: PageProps) {
             opacity: pendingKey ? 0.7 : 1,
           }}
         >
-          💳 {pendingKey === "purchase" ? "Processing payment…" : "Complete Purchase & Issue Tickets"}
+          💳 {pendingKey === "purchase" ? "Processing payment…" : remaining === 0 || !cart ? "Choose seats again" : "Complete Purchase & Issue Tickets"}
         </a>
         <BridgeErrorNote message={error} />
 
@@ -160,7 +161,7 @@ export default function Wireframe2D({ params }: PageProps) {
           className="font-mono-display"
           style={{ fontSize: 9, color: "var(--ink-muted)", marginTop: 8, textAlign: "center" }}
         >
-          🔒 Protected by Weverse Fan Authentication & Powered by Show Stop
+          🔒 Protected by Weverse Fan Authentication
         </div>
       </div>
     </WeverseCommunityLayout>

@@ -1,3 +1,5 @@
+> **Weverse sales sandbox:** Start all services and the polished frontend from the repository root with `npm ci`, then `npm run demo`. Open http://127.0.0.1:4000. See [the sandbox guide](../SANDBOX.md) for the five-minute sales script, test commands, and production boundaries. Billing and commit now require the cart owner's `X-Membership-Id`. The original reference material below describes the independently run services.
+
 # Running It
 
 ## Terminal 1: demo DB + mock upstreams (auto-seeds on first start)

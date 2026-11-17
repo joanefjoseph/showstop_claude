@@ -97,7 +97,7 @@ export function createTicketVendorApi(db: Database.Database) {
   }
   function requireCart(cartId: string, req: Request): CartRow {
     const cart = sql.cartById.get(cartId) as CartRow | undefined;
-    if (!cart || cart.partner_id !== req.header('x-partner-id')) {
+    if (!cart || cart.partner_id !== req.header('x-partner-id') || cart.membership_id !== req.header('x-membership-id')) {
       throw new HttpError(404, `Cart '${cartId}' not found`, 'CART_NOT_FOUND');
     }
     return cart;

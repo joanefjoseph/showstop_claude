@@ -42,13 +42,13 @@ export class TicketVendorClient {
     });
   }
   /** 4. Attach billing/payment details to an open cart. */
-  updateBilling(cartId: string, billing: VendorBillingRequest): Promise<VendorCart> {
-    return this.http.put(`/carts/${encodeURIComponent(cartId)}/billing`, { body: billing });
+  updateBilling(cartId: string, billing: VendorBillingRequest, membershipId: string): Promise<VendorCart> {
+    return this.http.put(`/carts/${encodeURIComponent(cartId)}/billing`, { body: billing, headers: { 'X-Membership-Id': membershipId } });
   }
   /** 5. Commit the cart -> converts holds into a confirmed order. */
-  commitCart(cartId: string, idempotencyKey: string): Promise<VendorOrder> {
+  commitCart(cartId: string, idempotencyKey: string, membershipId: string): Promise<VendorOrder> {
     return this.http.put(`/carts/${encodeURIComponent(cartId)}/commit`, {
-      headers: { 'Idempotency-Key': idempotencyKey },
+      headers: { 'Idempotency-Key': idempotencyKey, 'X-Membership-Id': membershipId },
     });
   }
   /** 6. Fetch a ticket (scoped to the member who purchased it). */

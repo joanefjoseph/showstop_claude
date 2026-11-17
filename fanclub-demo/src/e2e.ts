@@ -16,7 +16,7 @@ class StepFailed extends Error {}
 async function call<T = any>(method: string, path: string, opts: { body?: unknown; headers?: Record<string, string> } = {}) {
   const res = await fetch(`${BRIDGE}${path}`, {
     method,
-    headers: { ...(opts.body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...opts.headers },
+    headers: { ...(method === 'PUT' ? { 'X-Membership-Id': 'mem_9f3' } : {}), ...(opts.body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...opts.headers },
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
   });
   const text = await res.text();
@@ -62,13 +62,13 @@ async function probe(url: string, init: RequestInit = {}) {
 }
 async function preflight() {
   section('Preflight: mock upstreams called directly (bypassing the bridge)');
-  const vendorBase = `http://localhost:${demoConfig.vendorPort}/v1`;
+  const vendorBase = `http://127.0.0.1:${demoConfig.vendorPort}/v1`;
   const vendor = await probe(`${vendorBase}/events/evt_123/availability`, {
     headers: { 'X-Api-Key': demoConfig.vendorApiKey, 'X-Partner-Id': demoConfig.vendorPartnerId },
   });
   must(`ticket vendor mock answers at ${vendorBase} (got ${vendor.status})`,
     vendor.status === 200 && vendor.body?.eventId === 'evt_123', vendor);
-  const membershipBase = `http://localhost:${demoConfig.membershipPort}/api`;
+  const membershipBase = `http://127.0.0.1:${demoConfig.membershipPort}/api`;
   const membership = await probe(`${membershipBase}/members/verify`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${demoConfig.membershipApiKey}`, 'Content-Type': 'application/json' },
@@ -175,12 +175,12 @@ async function guardrails() {
   const lock = await call<SeatLockResponse>('POST', '/carts/lock', { headers: { 'X-Membership-Id': 'mem_p01' }, body: { eventId: 'evt_456', seatIds: [gaSeat] } });
   if (!check(`Platinum member locks GA seat ${gaSeat}`, lock.status === 201, lock.body)) return;
   const id = lock.body.cartId;
-  await call('PUT', `/carts/${id}/billing`, { body: billing('tok_decline_insufficient_funds', 'Grace', 'Hopper', 'platinum@example.com') });
-  const declined = await call('PUT', `/carts/${id}/commit`, { headers: { 'Idempotency-Key': `${id}-attempt-1` } });
+  await call('PUT', `/carts/${id}/billing`, { headers: { 'X-Membership-Id': 'mem_p01' }, body: billing('tok_decline_insufficient_funds', 'Grace', 'Hopper', 'platinum@example.com') });
+  const declined = await call('PUT', `/carts/${id}/commit`, { headers: { 'X-Membership-Id': 'mem_p01', 'Idempotency-Key': `${id}-attempt-1` } });
   check('commit with declining token → 402 PAYMENT_FAILED', declined.status === 402 && declined.body?.error?.code === 'PAYMENT_FAILED', declined.body);
-  const rebill = await call('PUT', `/carts/${id}/billing`, { body: billing('tok_mastercard_5454', 'Grace', 'Hopper', 'platinum@example.com') });
+  const rebill = await call('PUT', `/carts/${id}/billing`, { headers: { 'X-Membership-Id': 'mem_p01' }, body: billing('tok_mastercard_5454', 'Grace', 'Hopper', 'platinum@example.com') });
   check('re-attach billing on the same cart → 200', rebill.status === 200, rebill.body);
-  const retry = await call<CommitResponse>('PUT', `/carts/${id}/commit`, { headers: { 'Idempotency-Key': `${id}-attempt-2` } });
+  const retry = await call<CommitResponse>('PUT', `/carts/${id}/commit`, { headers: { 'X-Membership-Id': 'mem_p01', 'Idempotency-Key': `${id}-attempt-2` } });
   check('retry commit → 200 CONFIRMED', retry.status === 200 && retry.body.status === 'CONFIRMED', retry.body);
 }
 async function main() {

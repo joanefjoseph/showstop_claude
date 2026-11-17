@@ -158,8 +158,8 @@ export async function completePurchase(): Promise<PlacedOrder> {
     throw new Error("Your seat hold expired — go back and reserve seats again");
   }
 
-  await bridge.attachBilling(cart.cartId, buildBilling(member));
-  const res = await bridge.commitCart(cart.cartId, `weverse-${cart.cartId}`);
+  await bridge.attachBilling(cart.cartId, buildBilling(member), member.membershipId);
+  const res = await bridge.commitCart(cart.cartId, `weverse-${cart.cartId}`, member.membershipId);
 
   const order: PlacedOrder = {
     orderId: res.orderId,

@@ -54,19 +54,19 @@ cartsRouter.post('/lock', requireMembership, validate('body', lockBody), async (
   }
 });
 /** 4. PUT /carts/:cartId/billing */
-cartsRouter.put('/:cartId/billing', validate('params', cartIdParams), validate('body', billingBody), async (req, res, next) => {
+cartsRouter.put('/:cartId/billing', requireMembership, validate('params', cartIdParams), validate('body', billingBody), async (req, res, next) => {
   try {
     const billing: VendorBillingRequest = { ...(req.body as z.infer<typeof billingBody>), deliveryMethod: 'MOBILE' };
-    res.json(await attachBilling(req.params.cartId, billing));
+    res.json(await attachBilling(req.params.cartId, billing, getMember(res).membershipId));
   } catch (err) {
     next(err);
   }
 });
 /** 5. PUT /carts/:cartId/commit */
-cartsRouter.put('/:cartId/commit', validate('params', cartIdParams), async (req, res, next) => {
+cartsRouter.put('/:cartId/commit', requireMembership, validate('params', cartIdParams), async (req, res, next) => {
   try {
     const idempotencyKey = req.header('idempotency-key') ?? undefined;
-    res.json(await commitCart(req.params.cartId, idempotencyKey));
+    res.json(await commitCart(req.params.cartId, idempotencyKey, getMember(res).membershipId));
   } catch (err) {
     next(err);
   }

@@ -80,13 +80,13 @@ export const bridge = {
     }),
 
   /** 4. PUT /carts/:cartId/billing */
-  attachBilling: (cartId: string, billing: BillingRequest) =>
-    request<BillingResponse>("PUT", `/carts/${enc(cartId)}/billing`, { body: billing }),
+  attachBilling: (cartId: string, billing: BillingRequest, membershipId: string) =>
+    request<BillingResponse>("PUT", `/carts/${enc(cartId)}/billing`, { body: billing, headers: { "X-Membership-Id": membershipId } }),
 
   /** 5. PUT /carts/:cartId/commit */
-  commitCart: (cartId: string, idempotencyKey: string) =>
+  commitCart: (cartId: string, idempotencyKey: string, membershipId: string) =>
     request<CommitResponse>("PUT", `/carts/${enc(cartId)}/commit`, {
-      headers: { "Idempotency-Key": idempotencyKey },
+      headers: { "Idempotency-Key": idempotencyKey, "X-Membership-Id": membershipId },
     }),
 
   /** 6. GET /tickets/:ticketId */
