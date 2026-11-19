@@ -34,7 +34,7 @@ hash, for example `#/2c?venue=jaypark-new-york`.
 - Opening 2C, 2D or 2E without being signed in redirects to 2B for that show.
 - The username box is filled from `MELON_USERNAME` and is display-only. The
   password box shows ten masked characters and is not checked. The actual
-  membership check is made against `EMAIL_ADDRESS` through the bridge.
+  membership check is made against the sandbox fan account (`jpark_fan@gmail.com` by default) through the bridge.
 
 ### Languages
 
@@ -44,52 +44,22 @@ other languages. The purchase pages (2C to 2E) are English only.
 
 ## Run locally
 
-### Prerequisites
+This site is one of five customer sites that run together in the Show Stop sandbox. It is not started on its own. From the **repository root** (Node 22.12+):
 
-- Node 22 and pnpm 10 (pinned in `.mise.toml`).
-- The mock vendor and membership APIs (`fanclub-demo`, ports 3001 and 3002)
-  and the ticketing bridge (`fanclub-ticketing-bridge`, port 3003) must be
-  running. See their own READMEs for how to start them.
-- The mock vendor database must contain an event for each tour stop, with an
-  event id equal to the `id` in `src/data/tourVenues.ts`
-  (for example `jaypark-sao-paulo`). A show without a matching event will show
-  a bridge error on the seat selection page.
-
-### Configuration
-
-Create a `.env` file in this folder:
-
-```
-EMAIL_ADDRESS=<email of a member in the mock membership API>
-MELON_USERNAME=<username to show in the sign-in box>
-# Optional. Defaults to http://localhost:3003
-BRIDGE_URL=http://localhost:3003
+```sh
+npm ci
+npm run demo          # dev servers with hot reload
+# or: npm run build && npm run demo:built
 ```
 
-Restart the dev server after editing `.env`.
+Open [http://127.0.0.1:4004/#/2a](http://127.0.0.1:4004/#/2a). The same command also starts the mock vendor and membership APIs, the ticketing bridge and the other four sites, with a fresh seeded database. No `.env` file, pnpm or separate backend is needed.
 
-### Static assets
+- **Fan account:** `jpark_fan@gmail.com` is signed in by default. It can be changed from this site's operator page, [http://127.0.0.1:4004/operator](http://127.0.0.1:4004/operator), which also has Decline payment, Expire hold and Reset controls. Reset affects all five sites. `EMAIL_ADDRESS` in a `.env` file is only a fallback if the sandbox config is unavailable.
+- **Bridge:** the sandbox serves `/bridge` on the same origin and forwards it to the ticketing bridge on `:3003`.
+- **Seating:** step 2C draws a live seating diagram from the event's inventory, and highlights the section of the selected seat option.
+- See [SANDBOX.md](../SANDBOX.md) for the ports, operator controls and checks.
 
-Place these in `public/images/`:
-
-- `new-jaypark-lngshot-logo.png`
-- `new-jaypark-lngshot-art.png`
-- `new-jaypark-lngshot-morevision-logo.png`
-- `jwalkerz.jpg` (the JWalkerz membership recruitment poster)
-
-Optionally place `DrukWide-Bold.otf`, `Montserrat-Regular.ttf` and
-`Montserrat-Bold.ttf` in `public/fonts/`. Without them the browser uses
-fallback fonts.
-
-### Start
-
-```powershell
-corepack pnpm install
-npm run dev
-```
-
-Open [http://localhost:4004/](http://localhost:4004/). Vite defaults to port
-`4004`; set `PORT` to override it.
+The mock database seeds one event per tour stop, with an event id equal to the `id` in `src/data/tourVenues.ts` (for example `jaypark-sao-paulo`). Static assets live in `public/images/`.
 
 ## Architecture
 
@@ -97,13 +67,12 @@ Open [http://localhost:4004/](http://localhost:4004/). Vite defaults to port
 jaypark/
 |--- index.html                 # HTML shell; loads the React entry point
 |--- package.json               # Scripts and React/Vite dependencies
-|--- pnpm-lock.yaml
 |--- tsconfig.json
-|--- .mise.toml                 # Node and pnpm versions
+|--- .mise.toml                 # Node version
 |--- vite.config.ts             # Vite plugins, site metadata, port 4004,
-|                               # .env definitions, and /bridge proxy
+|                               # environment definitions, and /bridge proxy (dev)
 |--- site.json                  # Page title and description for the HTML shell
-|--- .env                       # EMAIL_ADDRESS, MELON_USERNAME, BRIDGE_URL
+|--- .env                       # Optional local fallback (EMAIL_ADDRESS, MELON_USERNAME); not needed in the sandbox
 |--- public/
 |   |--- images/                # Tour logo, hero art, More Vision logo, JWalkerz poster
 |   |--- fonts/                 # Optional Druk Wide and Montserrat files
@@ -114,7 +83,7 @@ jaypark/
     |--- i18n.ts                # EN/KO/ES strings and shared language state
     |--- assets.ts              # Paths to the images in public/images
     |--- index.css              # All styles: tour page port, purchase pages, accents
-    |--- vite-env.d.ts          # Types for the values injected from .env
+    |--- vite-env.d.ts          # Types for the values injected by Vite
     |--- pages/
     |   |--- Wireframe2A.tsx    # Tour page: hero, tour dates, FAQ
     |   |--- Wireframe2B.tsx    # Presale gate: Melon Ticket sign-in and Join card

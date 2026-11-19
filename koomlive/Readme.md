@@ -25,7 +25,7 @@ The app is four pages, selected by the URL hash:
 | `#/2d?venue=<id>` | **Checkout** (`Wireframe2D.tsx`) | Order summary, a live countdown for the hold, and the payment method (demo). **Complete Purchase** attaches billing and commits the cart. |
 | `#/2e?venue=<id>` | **Ticket** (`Wireframe2E.tsx`) | Order confirmation and the mobile ticket, with a rotating PDF417/QR barcode that refreshes automatically. |
 
-Pages 2C–2E are members-only. `MembershipGate` verifies `EMAIL_ADDRESS` with the bridge before rendering them, for example after a refresh or a deep link. The current member, availability, cart and order are kept in `sessionStorage`, so a page refresh doesn't lose the purchase.
+Pages 2C–2E are members-only. `MembershipGate` verifies the sandbox fan account (`fan@example.com` by default) with the bridge before rendering them, for example after a refresh or a deep link. The current member, availability, cart and order are kept in `sessionStorage`, so a page refresh doesn't lose the purchase.
 
 If the configured event has assigned seating instead of general admission, 2C automatically switches to a section map with adjacent seat-pair options.
 
@@ -59,9 +59,8 @@ The app calls six bridge routes, all in `src/api/bridgeClient.ts`:
 koomlive/
 |--- index.html                   # HTML shell; loads src/main.tsx
 |--- package.json                 # Scripts (dev / build / preview / format) and dependencies
-|--- pnpm-lock.yaml
-|--- .mise.toml                   # Tool versions: Node 22, pnpm 10.34.3
-|--- .env                         # Local settings (not committed) — see "Configuration"
+|--- .mise.toml                   # Tool versions: Node 22
+|--- .env                         # Optional local fallback; not needed in the sandbox
 |--- vite.config.ts               # React + Tailwind plugins, port 4003, /bridge proxy,
 |                                 # EMAIL_ADDRESS / KOOM_EVENT_ID defines, site metadata
 |--- site.json                    # Page title, description, robots settings
@@ -112,140 +111,24 @@ koomlive/
 
 ---
 
-## Running the app
+## Run locally
 
-### Prerequisites
+This site is one of five customer sites that run together in the Show Stop sandbox. It is not started on its own. From the **repository root** (Node 22.12+):
 
-- **Node.js 22** and **pnpm 10.34.3**. Either run `mise install` (reads `.mise.toml`) or use Corepack, which ships with Node.
-- The two backend projects, running locally:
-  - `fanclub-demo`: the mock Ticket Vendor (:3001) and Membership (:3002) APIs.
-  - `fanclub-ticketing-bridge`: the bridge (:3003).
-
-### 1. Start the backend
-
-Start the mock APIs first, then the bridge, each in its own terminal. Both projects ship a `.env.example`; copy it to `.env` the first time. The script names below follow each project's `package.json`; check there if yours differ.
-
-**Linux / macOS (bash)**
-
-```bash
-# Terminal 1 — mock vendor + membership APIs
-cd fanclub-demo
-cp .env.example .env          # first time only
-npm install
-npm run server                # seeds data/demo.db on first start
-
-# Terminal 2 — ticketing bridge
-cd fanclub-ticketing-bridge
-cp .env.example .env          # first time only
-npm install
-npm run dev
+```sh
+npm ci
+npm run demo          # dev servers with hot reload
+# or: npm run build && npm run demo:built
 ```
 
-**Windows (PowerShell)**
+Open [http://127.0.0.1:4003/#/2a](http://127.0.0.1:4003/#/2a). The same command also starts the mock vendor and membership APIs, the ticketing bridge and the other four sites, with a fresh seeded database. No `.env` file, pnpm or separate backend is needed.
 
-```powershell
-# Terminal 1 — mock vendor + membership APIs
-cd fanclub-demo
-Copy-Item .env.example .env   # first time only
-npm install
-npm run server
+- **Fan account:** `fan@example.com` is signed in by default. It can be changed from this site's operator page, [http://127.0.0.1:4003/operator](http://127.0.0.1:4003/operator), which also has Decline payment, Expire hold and Reset controls. Reset affects all five sites. `EMAIL_ADDRESS` in a `.env` file is only a fallback if the sandbox config is unavailable.
+- **Bridge:** the sandbox serves `/bridge` on the same origin and forwards it to the ticketing bridge on `:3003`.
+- **Seating:** step 2C draws a live seating diagram from the event's inventory, and highlights the section of the selected seat option.
+- See [SANDBOX.md](../SANDBOX.md) for the ports, operator controls and checks.
 
-# Terminal 2 — ticketing bridge
-cd fanclub-ticketing-bridge
-Copy-Item .env.example .env   # first time only
-npm install
-npm run dev
-```
-
-Check that the bridge serves the KOOM event:
-
-```bash
-# Linux / macOS
-curl -s http://localhost:3003/events/koom-live-terminal-5/availability
-```
-
-```powershell
-# Windows
-$a = Invoke-RestMethod http://localhost:3003/events/koom-live-terminal-5/availability
-$a.sections | Select-Object section, availableCount, @{n='price';e={$_.priceRange.min.amount}}
-```
-
-You should see three sections: `All Day Pass` (85), `Daytime Only` (37) and `Night Only` (60).
-
-### 2. Configure the app
-
-Create `koomlive/.env`. `EMAIL_ADDRESS` must belong to an **active** member seeded by `fanclub-demo` (see `fanclub-demo/src/db/seed.ts`).
-
-| Variable | Required | Default | Purpose |
-|---|---|---|---|
-| `EMAIL_ADDRESS` | yes | — | The fan-club member who is "logged in" |
-| `BRIDGE_URL` | no | `http://localhost:3003` | Where the Vite proxy sends `/bridge` requests |
-| `KOOM_EVENT_ID` | no | `koom-live-terminal-5` | Vendor event id to sell tickets for |
-| `PORT` | no | `4003` | Dev/preview port (read from the shell environment, not `.env`) |
-
-**Linux / macOS**
-
-```bash
-cd koomlive
-cat > .env <<'EOF'
-EMAIL_ADDRESS=member@example.com
-BRIDGE_URL=http://localhost:3003
-EOF
-```
-
-**Windows (PowerShell)**
-
-```powershell
-cd koomlive
-@"
-EMAIL_ADDRESS=member@example.com
-BRIDGE_URL=http://localhost:3003
-"@ | Set-Content .env
-```
-
-Restart the dev server after changing `.env`; the values are injected at startup.
-
-### 3. Install and start
-
-**Linux / macOS**
-
-```bash
-corepack pnpm install
-corepack pnpm dev                 # http://localhost:4003/
-```
-
-**Windows (PowerShell)**
-
-```powershell
-corepack pnpm install
-corepack pnpm dev                 # http://localhost:4003/
-```
-
-Open **http://localhost:4003/** and click **Tickets →** on the Live Concert card.
-
-To use a different port:
-
-```bash
-PORT=4010 corepack pnpm dev                 # Linux / macOS
-```
-
-```powershell
-$env:PORT='4010'; corepack pnpm dev         # Windows
-Remove-Item Env:PORT                        # clear it again afterwards
-```
-
-The server uses a strict port: if 4003 is taken it exits instead of picking another port. If you previously set `$env:PORT='4002'` for the comedy app in the same PowerShell window, clear it first.
-
-### 4. Production build (optional)
-
-```bash
-corepack pnpm build      # outputs dist/
-corepack pnpm preview    # serves dist/ on port 4003, with the same /bridge proxy
-```
-
-`/bridge` is proxied only by the Vite dev and preview servers. If you host `dist/` elsewhere, that server must forward `/bridge/*` to the bridge with the `/bridge` prefix removed.
-
----
+KOOM Live has one event, `koom-live-terminal-5`, with general-admission ticket types in addition to the assigned-seat map.
 
 ## Resetting demo data
 
@@ -272,8 +155,7 @@ To clear the app's in-browser purchase state, close the tab or remove the `purch
 
 | Message / symptom | Cause and fix |
 |---|---|
-| `Could not reach the ticketing bridge — is it running on :3003? (BRIDGE_UNREACHABLE)` | The bridge isn't running, or `BRIDGE_URL` is wrong. |
-| `EMAIL_ADDRESS is not set in .env` | Add it to `koomlive/.env` and restart the dev server. |
+| `The ticketing service is unavailable. Please try again.` | The sandbox is not running. Start it from the repository root with `npm run demo`. |
 | `No fan-club membership found for …` | The email isn't a seeded member. Use one from `fanclub-demo/src/db/seed.ts`. |
 | `Event 'koom-live-terminal-5' not found` | The database was seeded before the KOOM event existed. Reset the demo data. |
 | `Only N Night Only tickets are left` / `… sold out` | Not enough stock of that type. Lower the quantity or pick another type. |

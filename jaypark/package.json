@@ -4,10 +4,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
+    "typecheck": "tsc --noEmit",
+    "dev": "npm run demo --prefix ..",
     "build": "vite build",
-    "preview": "vite preview",
-    "format": "oxfmt"
+    "preview": "npm run demo:built --prefix ..",
+    "format": "prettier --write src"
   },
   "dependencies": {
     "bwip-js": "^4.11.4",

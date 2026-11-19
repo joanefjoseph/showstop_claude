@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => {
       proxy: bridgeProxy,
     },
     define: {
-      __EMAIL_ADDRESS__: JSON.stringify(env.EMAIL_ADDRESS ?? ""),
+      __EMAIL_ADDRESS__: JSON.stringify(env.EMAIL_ADDRESS ?? "fan@example.com"),
       // Vendor event_id for KOOM Live; defaults to "koom-live-terminal-5" (see tourVenues.ts)
       __KOOM_EVENT_ID__: JSON.stringify(env.KOOM_EVENT_ID ?? ""),
     },

@@ -220,7 +220,7 @@ export default function Wireframe2C({ params }: PageProps) {
           className="font-mono-display"
           style={{ fontSize: 9, color: "var(--ink-muted)", border: "1px solid var(--border)", padding: "3px 8px", flexShrink: 0, whiteSpace: "nowrap" }}
         >
-          GET /events/:id/availability
+          Live availability
         </div>
       </div>
 

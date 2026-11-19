@@ -25,6 +25,7 @@ async function request<T>(method: string, path: string, o: RequestOptions = {}):
   try {
     res = await fetch(`${BRIDGE_BASE}${path}`, {
       method,
+      signal: AbortSignal.timeout(12000),
       headers: {
         Accept: "application/json",
         ...(o.body !== undefined ? { "Content-Type": "application/json" } : {}),
@@ -33,7 +34,7 @@ async function request<T>(method: string, path: string, o: RequestOptions = {}):
       body: o.body !== undefined ? JSON.stringify(o.body) : undefined,
     });
   } catch {
-    throw new BridgeError(0, "BRIDGE_UNREACHABLE", "Could not reach the ticketing bridge — is it running on :3003?");
+    throw new BridgeError(0, "BRIDGE_UNREACHABLE", "The ticketing service is unavailable. Please try again.");
   }
 
   const text = await res.text();
@@ -46,7 +47,7 @@ async function request<T>(method: string, path: string, o: RequestOptions = {}):
     throw new BridgeError(
       res.status,
       err?.code ?? `HTTP_${res.status}`,
-      err?.message ?? json?.reason ?? `Bridge returned HTTP ${res.status}`,
+      err?.message ?? json?.reason ?? "The request could not be completed. Please try again.",
       json,
     );
   }
@@ -90,7 +91,7 @@ export const bridge = {
 };
 
 export function describeError(err: unknown): string {
-  if (err instanceof BridgeError) return `${err.message} (${err.code})`;
+  if (err instanceof BridgeError) return err.message;
   if (err instanceof Error) return err.message;
   return String(err);
 }
