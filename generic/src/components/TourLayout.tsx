@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import logo from "../assets/logo.jpg";
 import { ARTIST, TOUR_NAME, TOUR_YEAR, FAN_CLUB } from "../data/tour";
 
 const STEPS = ["Seats", "Payment", "Tickets"] as const;
@@ -9,8 +10,7 @@ export default function TourLayout({ step, children }: { step?: 1 | 2 | 3; child
     <div className="page">
       <header className="topbar">
         <a href="#/2a" className="brand">
-          {ARTIST}
-          <span>{TOUR_NAME} {TOUR_YEAR}</span>
+          <img className="brand-logo" src={logo} alt={ARTIST} />
         </a>
         <nav aria-label="Primary">
           <a href="#/2a">Tour</a>
@@ -33,7 +33,7 @@ export default function TourLayout({ step, children }: { step?: 1 | 2 | 3; child
       {children}
 
       <footer className="foot">
-        © {TOUR_YEAR} {ARTIST} · Tickets are issued as secure, rotating mobile barcodes.
+        © {TOUR_YEAR} {ARTIST}. All rights reserved.
       </footer>
     </div>
   );

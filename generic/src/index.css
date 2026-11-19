@@ -107,3 +107,14 @@ h3 { font-size: 1.05rem; }
 .barcode-canvas.is-qr { width: 200px; }
 .barcode-bar { height: 4px; margin-top: 10px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 2px; transition: width 1s linear; }
 .barcode-error { color: #b91c1c; font-size: .8rem; }
+
+.poster { position: relative; min-height: 460px; display: flex; align-items: flex-end; text-align: left; padding: 0; background-size: cover; background-position: center right; }
+.poster::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(11,11,18,.92) 0%, rgba(11,11,18,.55) 45%, rgba(11,11,18,0) 75%), linear-gradient(0deg, var(--bg) 0%, rgba(11,11,18,0) 35%); }
+.poster-copy { position: relative; width: 100%; max-width: 1080px; margin: 0 auto; padding: 48px 20px; }
+.poster-logo { display: block; width: min(420px, 80%); aspect-ratio: 16 / 7; object-fit: cover; mix-blend-mode: screen; margin: 0 0 8px -12px; }
+.poster-copy h2 { font-size: 1.4rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.poster-year { color: var(--muted); margin: 6px 0 20px; }
+.faq details { border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; }
+.faq summary { cursor: pointer; font-weight: 600; }
+.faq p { margin: 10px 0 0; }
+.brand-logo { height: 46px; width: 128px; object-fit: cover; mix-blend-mode: screen; display: block; }

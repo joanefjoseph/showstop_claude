@@ -15,7 +15,7 @@ Open [http://127.0.0.1:4000/#/2a](http://127.0.0.1:4000/#/2a). Operator controls
 
 | Route | Page |
 |---|---|
-| `#/2a` | Tour announcement: highlights and six dates, each marked Presale or On sale |
+| `#/2a` | Tour landing page: poster hero with logo, six dates (presale dates tagged), and an FAQ |
 | `#/2b?venue=<id>` | Fan club sign-in. Verifies membership, and presale access on presale dates. Offers "Join NOVA Nation" |
 | `#/2c?venue=<id>` | Seat selection with a live seat map |
 | `#/2d?venue=<id>` | Payment with a 5-minute hold timer |

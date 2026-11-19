@@ -86,7 +86,7 @@ A fictional artist, **NOVA** (Afterglow World Tour 2027, fan club "NOVA Nation")
 
 Walkthrough:
 
-1. **2A** tour page: six dates, each marked Presale or On sale.
+1. **2A** tour page: poster, six dates (presale dates tagged) and FAQ.
 2. **2B** fan club sign-in. Every date requires it. Presale dates also require a tier with presale access; otherwise the fan sees a "no presale access" message. The Join NOVA Nation button is a placeholder.
 3. **2C** seat selection at every venue: **Floor** is general admission (pick a quantity, up to 4), **Club** and **Lower Bowl** are reserved seats (for example A11).
 4. **2D** payment with the usual 5-minute hold timer.

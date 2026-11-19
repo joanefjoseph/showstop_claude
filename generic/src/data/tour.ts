@@ -51,3 +51,14 @@ export const ADDONS = {
     perks: ["Early entry, 90 minutes before doors", "Soundcheck access", "Laminate and commemorative poster"],
   },
 } as const;
+
+/** Tour page FAQ (2A) */
+export const FAQ: readonly { q: string; a: string }[] = [
+  { q: "When do tickets go on sale?", a: "Fan club presales open first on selected dates. Remaining dates go on sale to everyone at the same time." },
+  { q: "How many tickets can I buy?", a: "Up to 4 tickets per order for most shows. Limits may vary by date." },
+  { q: "What time are doors and showtime?", a: "Doors open at 6:30 PM and the show starts at 8:00 PM. Check your venue's website for any changes." },
+  { q: "Is there an age limit?", a: "All ages are welcome. Guests under 14 must be accompanied by an adult." },
+  { q: "Where will I find my tickets after I buy?", a: "Your tickets are delivered digitally to your account right after checkout. There is nothing to print." },
+  { q: "Can I get a refund or transfer my tickets?", a: "All sales are final. If a show is cancelled or rescheduled, you will be contacted about refund options." },
+  { q: "I need accessible seating. Who do I contact?", a: "Please contact the venue box office directly for accessible seating and accommodations." },
+];
