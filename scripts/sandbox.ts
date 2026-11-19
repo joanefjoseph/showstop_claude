@@ -12,11 +12,12 @@ const testing = process.argv.includes("--test");
 const offset = testing ? 1000 : 0;
 // Each customer site runs on its own port; `defaultEmail` is the fan signed in on a fresh reset.
 const SITES = [
-  { dir: "frontend", title: "Weverse/BTS", port: 4000, defaultEmail: "bts_army@gmail.com" },
-  { dir: "epikhigh", title: "Epik High", port: 4001, defaultEmail: "epikhigh_fan@gmail.com" },
-  { dir: "davidjin", title: "David Jin", port: 4002, defaultEmail: "funnygirl@gmail.com" },
-  { dir: "koomlive", title: "KOOM Live", port: 4003, defaultEmail: "fan@example.com" },
-  { dir: "jaypark", title: "Jay Park", port: 4004, defaultEmail: "jpark_fan@gmail.com" },
+  { dir: "generic", title: "Generic Tour (NOVA)", port: 4000, defaultEmail: "tourfan@example.com" },
+  { dir: "frontend", title: "Weverse/BTS", port: 4001, defaultEmail: "bts_army@gmail.com" },
+  { dir: "epikhigh", title: "Epik High", port: 4002, defaultEmail: "epikhigh_fan@gmail.com" },
+  { dir: "davidjin", title: "David Jin", port: 4003, defaultEmail: "funnygirl@gmail.com" },
+  { dir: "koomlive", title: "KOOM Live", port: 4004, defaultEmail: "fan@example.com" },
+  { dir: "jaypark", title: "Jay Park", port: 4005, defaultEmail: "jpark_fan@gmail.com" },
 ];
 // Check ports before resetting SQLite, so a second launch cannot erase a live demo.
 for (const candidate of [3001 + offset, 3002 + offset, 3003 + offset, ...(testing ? [] : SITES.map((s) => s.port))]) {
@@ -325,7 +326,7 @@ try {
   );
 } catch (error) {
   console.error(
-    "Sandbox could not start. Check that ports 3001–3003 and 4000–4004 are free.",
+    "Sandbox could not start. Check that ports 3001–3003 and 4000–4005 are free.",
     error,
   );
   await shutdown(1);

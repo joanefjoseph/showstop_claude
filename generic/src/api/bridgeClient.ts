@@ -1,0 +1,104 @@
+import type {
+  BillingRequest, BillingResponse, CommitResponse, EventAvailabilityResponse,
+  MembershipVerificationResponse, MobileTicketResponse, SeatLockResponse,
+} from "./bridgeTypes";
+
+/** Proxied to the bridge by vite.config.ts (server.proxy['/bridge']). */
+const BRIDGE_BASE = "/bridge";
+
+export class BridgeError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly code: string,
+    message: string,
+    public readonly body?: unknown,
+  ) {
+    super(message);
+    this.name = "BridgeError";
+  }
+}
+
+interface RequestOptions { body?: unknown; headers?: Record<string, string> }
+
+async function request<T>(method: string, path: string, o: RequestOptions = {}): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${BRIDGE_BASE}${path}`, {
+      method,
+      signal: AbortSignal.timeout(12000),
+      headers: {
+        Accept: "application/json",
+        ...(o.body !== undefined ? { "Content-Type": "application/json" } : {}),
+        ...o.headers,
+      },
+      body: o.body !== undefined ? JSON.stringify(o.body) : undefined,
+    });
+  } catch {
+    throw new BridgeError(0, "BRIDGE_UNREACHABLE", "The ticketing service is unavailable. Please try again.");
+  }
+
+  const text = await res.text();
+  let json: any;
+  try { json = text ? JSON.parse(text) : undefined; } catch { /* non-JSON body */ }
+
+  if (!res.ok) {
+    // Bridge errors are { error: { code, message, requestId, ... } }; verify's 404 is { verified:false, reason }
+    const err = json?.error;
+    throw new BridgeError(
+      res.status,
+      err?.code ?? `HTTP_${res.status}`,
+      err?.message ?? json?.reason ?? "The request could not be completed. Please try again.",
+      json,
+    );
+  }
+  return json as T;
+}
+
+const enc = encodeURIComponent;
+
+/** The 6 bridge routes. */
+export const bridge = {
+  /** 1. GET /events/:eventId/availability */
+  getAvailability: (eventId: string) =>
+    request<EventAvailabilityResponse>("GET", `/events/${enc(eventId)}/availability`),
+
+  /** 2. POST /membership/verify */
+  verifyMembership: (email: string) =>
+    request<MembershipVerificationResponse>("POST", "/membership/verify", { body: { email } }),
+
+  /** 3. POST /carts/lock */
+  lockSeats: (membershipId: string, eventId: string, seatIds: string[]) =>
+    request<SeatLockResponse>("POST", "/carts/lock", {
+      headers: { "X-Membership-Id": membershipId },
+      body: { eventId, seatIds },
+    }),
+
+  /** 3b. POST /carts/lock — general admission: the bridge picks `quantity` tickets of that type */
+  lockTickets: (membershipId: string, eventId: string, section: string, quantity: number) =>
+    request<SeatLockResponse>("POST", "/carts/lock", {
+      headers: { "X-Membership-Id": membershipId },
+      body: { eventId, section, quantity },
+    }),
+
+  /** 4. PUT /carts/:cartId/billing */
+  attachBilling: (cartId: string, billing: BillingRequest, membershipId: string) =>
+    request<BillingResponse>("PUT", `/carts/${enc(cartId)}/billing`, { body: billing, headers: { "X-Membership-Id": membershipId } }),
+
+  /** 5. PUT /carts/:cartId/commit */
+  commitCart: (cartId: string, idempotencyKey: string, membershipId: string) =>
+    request<CommitResponse>("PUT", `/carts/${enc(cartId)}/commit`, {
+      headers: { "Idempotency-Key": idempotencyKey, "X-Membership-Id": membershipId },
+    }),
+
+  /** 6. GET /tickets/:ticketId */
+  getMobileTicket: (ticketId: string, membershipId: string) =>
+    request<MobileTicketResponse>("GET", `/tickets/${enc(ticketId)}`, {
+      headers: { "X-Membership-Id": membershipId },
+    }),
+};
+
+export function describeError(err: unknown): string {
+  if (err instanceof BridgeError) return err.message;
+  if (err instanceof Error) return err.message;
+  return String(err);
+}

@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import { config } from '../config.ts';
 import { ticketVendorClient } from '../clients/ticketVendorClient.ts';
 import { AppError } from '../errors.ts';
-import { isGeneralAdmissionEvent } from './availabilityService.ts';
 import type { MembershipRecord } from '../types/membership.ts';
 import type { VendorBillingRequest, VendorCart } from '../types/vendor.ts';
 import type { BillingResponse, CommitResponse, SeatLockResponse } from '../types/api.ts';
@@ -96,13 +95,16 @@ async function holdGeneralAdmission(
 ): Promise<VendorCart> {
   for (let attempt = 1; attempt <= GA_LOCK_ATTEMPTS; attempt++) {
     const event = await ticketVendorClient.getEventAvailability(eventId);
-    if (!isGeneralAdmissionEvent(event.seats)) {
+    // GA ticket types: sections whose every ticket is general admission. An event can mix them
+    // with assigned-seat sections (e.g. a standing floor plus reserved levels).
+    const ticketTypes = [...new Set(event.seats.map((s) => s.section))].filter((name) =>
+      event.seats.filter((s) => s.section === name).every((s) => s.generalAdmission === true),
+    );
+    if (ticketTypes.length === 0 || (section !== undefined && !ticketTypes.includes(section) &&
+        event.seats.some((s) => s.section === section))) {
       throw new AppError(422, 'NOT_GENERAL_ADMISSION',
-        `${event.eventName} has assigned seating; lock specific seatIds instead of a quantity`);
+        `${event.eventName} has assigned seating${section ? ` in '${section}'` : ''}; lock specific seatIds instead of a quantity`);
     }
-
-    // Ticket types, from every ticket (sold ones included) so a sold-out type gives 409, not 404
-    const ticketTypes = [...new Set(event.seats.map((s) => s.section))];
     if (section === undefined && ticketTypes.length > 1) {
       throw new AppError(400, 'SECTION_REQUIRED',
         `${event.eventName} sells several ticket types; choose one of: ${ticketTypes.join(', ')}`,

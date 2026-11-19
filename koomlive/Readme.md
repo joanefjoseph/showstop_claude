@@ -1,6 +1,6 @@
 # KOOM Live — Ticketing Web App
 
-A React + TypeScript single-page app (Vite, port **4003**) for **KOOM 2026** at Terminal 5, Manhattan, on Oct 16, 2026. It combines the KOOM Live landing page with a members-only ticket purchase flow backed by the Show Stop ticketing bridge.
+A React + TypeScript single-page app (Vite, port **4004**) for **KOOM 2026** at Terminal 5, Manhattan, on Oct 16, 2026. It combines the KOOM Live landing page with a members-only ticket purchase flow backed by the Show Stop ticketing bridge.
 
 The event has two parts and three general-admission ticket types:
 
@@ -32,7 +32,7 @@ If the configured event has assigned seating instead of general admission, 2C au
 ### How the pieces fit together
 
 ```text
-Browser (http://localhost:4003)
+Browser (http://localhost:4004)
    │  /bridge/*  (Vite dev/preview proxy, prefix stripped)
    ▼
 fanclub-ticketing-bridge   :3003   membership checks, carts, GA quantity locks, barcodes
@@ -61,7 +61,7 @@ koomlive/
 |--- package.json                 # Scripts (dev / build / preview / format) and dependencies
 |--- .mise.toml                   # Tool versions: Node 22
 |--- .env                         # Optional local fallback; not needed in the sandbox
-|--- vite.config.ts               # React + Tailwind plugins, port 4003, /bridge proxy,
+|--- vite.config.ts               # React + Tailwind plugins, port 4004, /bridge proxy,
 |                                 # EMAIL_ADDRESS / KOOM_EVENT_ID defines, site metadata
 |--- site.json                    # Page title, description, robots settings
 |--- tsconfig.json
@@ -113,7 +113,7 @@ koomlive/
 
 ## Run locally
 
-This site is one of five customer sites that run together in the Show Stop sandbox. It is not started on its own. From the **repository root** (Node 22.12+):
+This site is one of six customer sites that run together in the Show Stop sandbox. It is not started on its own. From the **repository root** (Node 22.12+):
 
 ```sh
 npm ci
@@ -121,9 +121,9 @@ npm run demo          # dev servers with hot reload
 # or: npm run build && npm run demo:built
 ```
 
-Open [http://127.0.0.1:4003/#/2a](http://127.0.0.1:4003/#/2a). The same command also starts the mock vendor and membership APIs, the ticketing bridge and the other four sites, with a fresh seeded database. No `.env` file, pnpm or separate backend is needed.
+Open [http://127.0.0.1:4004/#/2a](http://127.0.0.1:4004/#/2a). The same command also starts the mock vendor and membership APIs, the ticketing bridge and the other five sites, with a fresh seeded database. No `.env` file, pnpm or separate backend is needed.
 
-- **Fan account:** `fan@example.com` is signed in by default. It can be changed from this site's operator page, [http://127.0.0.1:4003/operator](http://127.0.0.1:4003/operator), which also has Decline payment, Expire hold and Reset controls. Reset affects all five sites. `EMAIL_ADDRESS` in a `.env` file is only a fallback if the sandbox config is unavailable.
+- **Fan account:** `fan@example.com` is signed in by default. It can be changed from this site's operator page, [http://127.0.0.1:4004/operator](http://127.0.0.1:4004/operator), which also has Decline payment, Expire hold and Reset controls. Reset affects all five sites. `EMAIL_ADDRESS` in a `.env` file is only a fallback if the sandbox config is unavailable.
 - **Bridge:** the sandbox serves `/bridge` on the same origin and forwards it to the ticketing bridge on `:3003`.
 - **Seating:** step 2C draws a live seating diagram from the event's inventory, and highlights the section of the selected seat option.
 - See [SANDBOX.md](../SANDBOX.md) for the ports, operator controls and checks.
@@ -161,7 +161,7 @@ To clear the app's in-browser purchase state, close the tab or remove the `purch
 | `Only N Night Only tickets are left` / `… sold out` | Not enough stock of that type. Lower the quantity or pick another type. |
 | `SEAT_LIMIT_EXCEEDED` | The quantity is above the member tier's per-order limit. |
 | `HOLD_EXPIRED` on checkout | The hold (about 5 minutes) ran out. Go back to 2C and reserve again. |
-| Dev server exits with "port in use" | Something else is on 4003, or `PORT` is set in your shell. |
+| Dev server exits with "port in use" | Something else is on 4004, or `PORT` is set in your shell. |
 
 ---
 

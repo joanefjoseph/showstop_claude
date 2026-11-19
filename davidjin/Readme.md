@@ -4,7 +4,7 @@ This folder contains a React and TypeScript single-page app built with Vite. It 
 
 ## Run locally
 
-This site is one of five customer sites that run together in the Show Stop sandbox. It is not started on its own. From the **repository root** (Node 22.12+):
+This site is one of six customer sites that run together in the Show Stop sandbox. It is not started on its own. From the **repository root** (Node 22.12+):
 
 ```sh
 npm ci
@@ -12,9 +12,9 @@ npm run demo          # dev servers with hot reload
 # or: npm run build && npm run demo:built
 ```
 
-Open [http://127.0.0.1:4002/#/2a](http://127.0.0.1:4002/#/2a). The same command also starts the mock vendor and membership APIs, the ticketing bridge and the other four sites, with a fresh seeded database. No `.env` file, pnpm or separate backend is needed.
+Open [http://127.0.0.1:4003/#/2a](http://127.0.0.1:4003/#/2a). The same command also starts the mock vendor and membership APIs, the ticketing bridge and the other five sites, with a fresh seeded database. No `.env` file, pnpm or separate backend is needed.
 
-- **Fan account:** `funnygirl@gmail.com` is signed in by default. It can be changed from this site's operator page, [http://127.0.0.1:4002/operator](http://127.0.0.1:4002/operator), which also has Decline payment, Expire hold and Reset controls. Reset affects all five sites. `EMAIL_ADDRESS` in a `.env` file is only a fallback if the sandbox config is unavailable.
+- **Fan account:** `funnygirl@gmail.com` is signed in by default. It can be changed from this site's operator page, [http://127.0.0.1:4003/operator](http://127.0.0.1:4003/operator), which also has Decline payment, Expire hold and Reset controls. Reset affects all five sites. `EMAIL_ADDRESS` in a `.env` file is only a fallback if the sandbox config is unavailable.
 - **Bridge:** the sandbox serves `/bridge` on the same origin and forwards it to the ticketing bridge on `:3003`.
 - **Seating:** step 2C draws a live seating diagram from the event's inventory, and highlights the section of the selected seat option.
 - See [SANDBOX.md](../SANDBOX.md) for the ports, operator controls and checks.
