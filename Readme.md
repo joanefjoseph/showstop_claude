@@ -1,127 +1,83 @@
-> **Weverse sales sandbox:** Start all services and the polished frontend from the repository root with `npm ci`, then `npm run demo`. Open http://127.0.0.1:4000. See [the sandbox guide](SANDBOX.md) for the five-minute sales script, test commands, and production boundaries. Billing and commit now require the cart owner's `X-Membership-Id`. The original reference material below describes the independently run services.
+# Show Stop: Fanclub Ticketing Sandbox
 
-# Fanclub Ticketing Demo
+This repository simulates the full concert-ticket journey for five artist sites: a fan verifies their fan-club membership, checks live seat inventory, locks seats on a seating diagram, pays, and receives a rotating mobile ticket barcode. Everything runs locally against mock providers with synthetic data. No real payments are taken.
 
-This monorepo-style demo simulates the full concert-ticket journey: a fan verifies their fan-club membership, checks live seat inventory, locks seats, pays, and receives a rotating mobile ticket barcode. It has three parts:
+> **Quick start** (Node 22.12+): from the repository root run `npm ci`, then `npm run demo`. Open any site from the table below. See [SANDBOX.md](SANDBOX.md) for the operator controls, walkthrough, checks and the boundaries of what is simulated.
 
-| Directory | Role | Default port |
+## Components
+
+| Directory | Role | Port |
 |---|---|---|
-| `fanclub-demo/` | Mock upstream services: a ticket-vendor API, a membership API, and a SQLite database that backs both; API console | Vendor `3001`, Membership `3002`, Console `3004` |
-| `fanclub-ticketing-bridge/` | Express API gateway that the frontend talks to. It validates requests, applies business rules, and calls the two mocks | `3003` |
-| `frontend/` | Vite + React web app that mimics the Weverse notice → tour dates → seat selection → checkout → ticket flow | `3000` |
+| `fanclub-demo/` | Mock upstream services: a ticket-vendor API, a membership API, and a SQLite database behind both | Vendor `3001`, Membership `3002` (API console `3004` when run on its own) |
+| `fanclub-ticketing-bridge/` | Express API gateway the sites talk to. It validates requests, applies business rules and calls the two mocks | `3003` |
+| `frontend/` | Weverse / BTS site (BTS World Tour "ARIRANG") | `4000` |
+| `epikhigh/` | Epik High North America Tour site | `4001` |
+| `davidjin/` | David Jin Comedy site | `4002` |
+| `koomlive/` | KOOM Live site, with assigned seating and general admission | `4003` |
+| `jaypark/` | Jay Park World Tour site, with EN / 한 / ES toggle | `4004` |
+| `scripts/` | `sandbox.ts` (starts everything), `operator.html` (operator controls), `regression.ts` (checks) | |
 
-## Directory layout
+The directories must sit side by side. `fanclub-demo/src/bridgeContracts.ts` imports types from `../../fanclub-ticketing-bridge/src/types/`.
 
-The three directories must sit side by side. `fanclub-demo/src/bridgeContracts.ts` imports types from `../../fanclub-ticketing-bridge/src/types/`, so moving one breaks the other.
+Each customer site is a React and TypeScript Vite app with the same five pages, selected by the URL hash: `#/2a` landing or notice, `#/2b` tour dates or sign-in, `#/2c` seat selection with a live seating diagram, `#/2d` checkout, `#/2e` mobile ticket. Every site has its own README with its branding and layout details.
 
-```
-<workspace>/
-├── fanclub-demo/
-├── fanclub-ticketing-bridge/
-└── frontend/
-```
+## Running the sandbox
 
----
-
-## How the three connect
-
-```
- Browser (frontend, Vite :3000)
-    │  fetch('/bridge/...')
-    ▼
- Vite dev proxy ── rewrites /bridge → '' ──▶ Bridge (Express :3003)
-                                                 │
-                         ┌───────────────────────┴───────────────────────┐
-                         ▼                                               ▼
-        Ticket vendor mock (:3001, /v1)                  Membership mock (:3002, /api)
-                         │                                               │
-                         └──────────── both read/write ──────────────────┘
-                                      fanclub-demo/data/demo.db
+```sh
+npm ci
+npm run demo            # dev servers with hot reload
+# or
+npm run build && npm run demo:built
 ```
 
-- **Frontend → Bridge.** The frontend never calls the mocks directly. Its Vite dev server proxies every `/bridge/*` request to the bridge (`BRIDGE_URL`, default `http://localhost:3003`). Because requests are same-origin, no CORS setup is needed.
-- **Bridge → mocks.** The bridge calls the ticket vendor (`TICKET_VENDOR_BASE_URL`) and the membership API (`MEMBERSHIP_BASE_URL`), using the API keys in its `.env`.
-- **Mocks → database.** `fanclub-demo` runs both mock APIs against one SQLite file (`data/demo.db`). The membership tables and the vendor tables live in the same file.
-- **Tests.** `fanclub-demo/src/e2e.ts` exercises the bridge end to end and expects it to be running.
+Keep the terminal open; `Ctrl+C` stops everything. Startup seeds fresh inventory, with event dates moved forward from launch. Start only one instance.
 
----
+| Site | URL | Operator controls | Default fan |
+|---|---|---|---|
+| Weverse / BTS | http://127.0.0.1:4000/#/2a | `:4000/operator` | `bts_army@gmail.com` |
+| Epik High | http://127.0.0.1:4001/#/2a | `:4001/operator` | `epikhigh_fan@gmail.com` |
+| David Jin | http://127.0.0.1:4002/#/2a | `:4002/operator` | `funnygirl@gmail.com` |
+| KOOM Live | http://127.0.0.1:4003/#/2a | `:4003/operator` | `fan@example.com` |
+| Jay Park | http://127.0.0.1:4004/#/2a | `:4004/operator` | `jpark_fan@gmail.com` |
 
-## Run order
+No `.env` files are needed. The runner configures the mock services and the bridge itself, and serves each site's `/bridge` path on the same origin.
 
-Start the services in this order. The first two must be running before the frontend can do anything useful.
+Checks:
 
-1. **`fanclub-demo`**: the mock upstreams (first run needs a reset to seed the database)
-2. **`fanclub-ticketing-bridge`**: the API gateway
-3. **`frontend`**: the web app
-
-> The package.json scripts below are the ones the projects use (for example `start:fresh` is referenced in the e2e script's error message). If a script name differs in your `package.json`, use the matching one.
-
-### 1. `fanclub-demo` (mocks)
-
-```bash
-cd fanclub-demo
-pnpm install            # or npm install
-
-# First run, or whenever you want a clean database:
-npm run start:fresh     # equivalent to: npx tsx src/server.ts --reset
-
-# Later runs (keeps existing data):
-npm run start           # equivalent to: npx tsx src/server.ts
+```sh
+npm run typecheck       # all sites, services and scripts
+npm test                # integration + regression checks on separate ports
+npm run build           # production builds of all five sites
 ```
 
-On startup you should see:
+The tests use ports 4001 to 4003 for the services, so stop the sandbox before running them.
+
+## How the pieces connect
 
 ```
-Mock Ticket Vendor Partner API -> http://localhost:3001/v1
-Mock Membership API            -> http://localhost:3002/api
+ Browser (one of the five sites, ports 4000-4004)
+    |  fetch('/bridge/...')            fetch('/sandbox/config')
+    v
+ Sandbox server (scripts/sandbox.ts): same-origin /bridge proxy, operator controls
+    |
+    v
+ Bridge (Express :3003)
+    +--------------------+---------------------+
+    v                                          v
+ Ticket vendor mock (:3001, /v1)     Membership mock (:3002, /api)
+    +---------------- both read/write ----------+
+              work/sandbox.db (generated, git-ignored)
 ```
 
-Stop with `Ctrl+C`. The server closes both servers and the database cleanly.
+- **Site to bridge.** Sites never call the mocks directly. Requests go to `/bridge/*` on their own origin, which the sandbox forwards to the bridge, so no CORS setup is needed.
+- **Fan account.** Each site fetches `/sandbox/config` and re-checks it every 3 seconds. When the operator switches member or resets, the purchase session is cleared and the fan returns to the first page.
+- **Bridge to mocks.** The bridge calls the vendor and membership APIs with the demo API keys set by the runner.
+- **Cart ownership.** Billing and commit require the cart owner's `X-Membership-Id`.
+- **Seating diagram.** Step 2C draws the venue from the event's live inventory (floor block, lower and upper levels around the stage), highlights the selected option's section and shows remaining seats.
 
-### 2. `fanclub-ticketing-bridge` (API gateway)
+## Running a service on its own
 
-```bash
-cd fanclub-ticketing-bridge
-pnpm install
-npm run dev             # or: npm start, after a build; check your package.json
-```
-
-On startup:
-
-```
-fanclub-ticketing-bridge listening on :3003 (development)
-    ticket vendor -> http://localhost:3001/v1
-    membership    -> http://localhost:3002/api
-```
-
-Check it with:
-
-```bash
-curl http://localhost:3003/health
-```
-
-### 3. `frontend` (web app)
-
-```bash
-cd frontend
-pnpm install
-pnpm dev
-```
-
-Open the URL Vite prints, with the hash route for the first page, for example `http://localhost:<port>/#/2a`.
-
-Only `pnpm dev` and `vite preview` run the `/bridge` proxy. A static build (`pnpm build`) needs its own reverse proxy for `/bridge`, or CORS enabled on the bridge.
-
-### Verify the whole stack
-
-With all three running:
-
-```bash
-cd fanclub-demo
-npx tsx src/e2e.ts
-```
-
-The script runs the happy path (availability → verify → lock → billing → commit → mobile ticket → barcode check) and a set of guardrail checks. It prints `N passed, M failed` and exits non-zero on failure.
+The services can still run independently, for example for the reference docs below. Start them in this order: `fanclub-demo`, then `fanclub-ticketing-bridge`. Each project has a `.env.example` to copy to `.env`. `fanclub-demo` is started with `npm run start:fresh` (reseeds) or `npm run start`; the bridge with `npm run dev`. Verify with `curl http://localhost:3003/health` and `cd fanclub-demo && npx tsx src/e2e.ts` (expects the bridge to be running). The sites themselves are started through `npm run demo`.
 
 ---
 
@@ -320,94 +276,70 @@ MEMBERSHIP_CACHE_TTL_SECONDS=60
 
 ---
 
-## 3. `frontend/`: Vite web app
+## 3. Customer sites (`frontend/`, `epikhigh/`, `davidjin/`, `koomlive/`, `jaypark/`)
 
 ### Purpose
 
-A five-page mock of the Weverse ticketing journey. Each page is a route in the URL hash:
+Five Vite + React web apps that mimic each artist's ticketing journey over the same bridge API. Each page is a route in the URL hash:
 
-| Route | Page | What it does |
-|---|---|---|
-| `#/2a` | Weverse notice | Verifies the fan's membership on load. Shows tier and presale status, and the Box Office button (or "Upgrade Your Membership" for non-presale tiers) |
-| `#/2b` | Tour dates | Lists the tour venues. "Presale Active" loads live availability for that venue |
-| `#/2c?venue=<id>` | Seat selection | Shows live seat pairs grouped by section and price. "Reserve & Lock Seats" locks the chosen pair |
-| `#/2d?venue=<id>` | Checkout | Shows the order summary and a live countdown to the hold expiry. "Complete Purchase" attaches billing and commits the order |
-| `#/2e?venue=<id>` | Mobile ticket | Shows the ticket details and a live PDF417/QR barcode that rotates |
+| Route | What it does |
+|---|---|
+| `#/2a` | Landing page or notice. Some sites verify the fan's membership here |
+| `#/2b` | Tour dates or sign-in. Members with presale access can open a show |
+| `#/2c?venue=<id>` | Seat selection: live seating diagram plus seat-pair options (KOOM Live also sells general-admission types). "Reserve & Lock Seats" holds the selection |
+| `#/2d?venue=<id>` | Checkout with a live hold countdown. Completes billing and commit, or offers "Choose seats again" when the hold has expired |
+| `#/2e?venue=<id>` | Mobile ticket with a rotating barcode, one tab per purchased ticket |
 
-Pages 2B–2E are behind `PresaleGate`. Members without presale access are redirected back to 2A.
+Later pages are behind a gate (`PresaleGate` or `MembershipGate`) that redirects to the sign-in page when the member is missing or ineligible.
 
-### Structure
+### Shared structure
 
 ```
-frontend/
+<site>/
 ├── package.json
-├── pnpm-lock.yaml
-├── vite.config.ts              # Dev proxy, EMAIL_ADDRESS injection
+├── vite.config.ts              # Site metadata, EMAIL_ADDRESS fallback define
 ├── index.html
-├── .env
-├── .figma/make/site.json       # Figma Make metadata
+├── site.json                   # Site metadata
+├── public/                     # Static artwork
 └── src/
-    ├── main.tsx
-    ├── App.tsx                 # Hash router, presale route guard
-    ├── routing.ts              # PageProps type, navigate() helper
-    ├── env.d.ts               # Declares __EMAIL_ADDRESS__
-    ├── index.css
+    ├── main.tsx                # Mounts App; syncs with /sandbox/config
+    ├── App.tsx                 # Hash router, route guard
+    ├── routing.ts
     ├── api/
-    │   ├── bridgeTypes.ts      # Frontend copies of the bridge's response types
+    │   ├── bridgeTypes.ts      # Copies of the bridge's response types
     │   ├── bridgeClient.ts     # fetch wrapper for /bridge/*, BridgeError, describeError
-    │   ├── purchaseSession.ts  # sessionStorage state across pages (member, cart, order)
-    │   ├── purchaseFlow.ts     # Step-by-step orchestration (verify, lock, bill, commit, ticket)
-    │   ├── seatOptions.ts      # Builds adjacent seat pairs per section and price
-    │   ├── useBridgeAction.ts  # Hook: run an API call, then navigate, with pending/error state
-    │   ├── useCountdown.ts     # Live countdown and mm:ss formatting
-    │   └── format.ts           # Money and date formatting
-    ├── components/
-    │   ├── WeverseCommunityLayout.tsx / .css  # Shared page chrome
-    │   ├── NoticeLayout.css                   # 2A styles
-    │   ├── BridgeErrorNote.tsx                # Inline API error display
-    │   ├── PresaleGate.tsx                    # Route guard for presale pages
-    │   └── TicketBarcode.tsx                  # Renders PDF417/QR with bwip-js
-    ├── pages/
-    │   ├── Wireframe2A.tsx … Wireframe2E.tsx
-    ├── data/
-    │   └── tourVenues.ts       # Venue IDs (must match the vendor's event IDs)
-    └── assets/
-        └── weverse.assets.ts   # SVG icons and avatar images
+    │   ├── purchaseSession.ts  # sessionStorage state (member, cart, order)
+    │   ├── purchaseFlow.ts     # verify, lock, bill, commit, ticket
+    │   ├── seatOptions.ts      # Adjacent seat options per section and price
+    │   ├── useBridgeAction.ts, useCountdown.ts, format.ts
+    ├── components/             # Site-specific layout, gate, TicketBarcode, BridgeErrorNote
+    ├── pages/                  # Wireframe2A.tsx ... Wireframe2E.tsx
+    └── data/tourVenues.ts      # Venue ids (must match the vendor's event ids)
 ```
+
+`koomlive/` adds `api/generalAdmission.ts` and `data/ticketTypes.ts`; `jaypark/` adds `i18n.ts` and `data/faq.ts`.
 
 ### How a purchase flows through the code
 
 | Step | Page | Function in `purchaseFlow.ts` | Bridge call |
 |---|---|---|---|
-| 1 | 2A loads | `verifyMembership()` | `POST /membership/verify` |
-| 2 | 2B "Presale Active" | `loadAvailability(eventId)` | `GET /events/:id/availability` |
-| 3 | 2C mounts / "Reserve" | `lockSeats(eventId, seatIds)` | `POST /carts/lock` |
+| 1 | Sign-in | `verifyMembership()` | `POST /membership/verify` |
+| 2 | Show selection | `loadAvailability(eventId)` | `GET /events/:id/availability` |
+| 3 | 2C "Reserve" | `lockSeats(eventId, seatIds)` (`lockTickets` for general admission) | `POST /carts/lock` |
 | 4 | 2D "Complete Purchase" | `completePurchase()` | `PUT /carts/:id/billing`, then `PUT /carts/:id/commit` |
-| 5 | 2E loads, then re-fetches on each rotation | `fetchMobileTicket()` | `GET /tickets/:ticketId` |
+| 5 | 2E loads, then re-fetches on each rotation | `fetchMobileTicket(index)` | `GET /tickets/:ticketId` |
 
-State between pages lives in `sessionStorage` under one key. A browser refresh keeps the member, cart and order. Each step also updates the session, so the next page can read it.
+An expired hold (`410`) is marked expired in the session so 2D can send the fan back to seat selection. A billing `409` on retry is treated as "already attached".
 
-### Configuration (`.env`)
+State between pages lives in `sessionStorage` under `purchase-session`. A reload keeps the member, cart and order.
 
-```env
-# Fan-club account used for the whole flow (see the account table above)
-EMAIL_ADDRESS=fan@example.com
+### Configuration
 
-# Where the dev proxy forwards /bridge/* (optional, default shown)
-BRIDGE_URL=http://localhost:3003
-```
-
-`EMAIL_ADDRESS` has no `VITE_` prefix, so `vite.config.ts` injects it with `define` as `__EMAIL_ADDRESS__`. Restart the dev server after changing `.env`.
-
-### `vite.config.ts` essentials
-
-- `server.proxy` and `preview.proxy` forward `/bridge` to `BRIDGE_URL` with the prefix removed.
-- `define` injects `__EMAIL_ADDRESS__`.
-- `loadEnv(mode, process.cwd(), "")` reads every variable from `.env`.
+The sandbox needs no configuration. The fan's email is read from `sessionStorage` (`sandbox-email`, set from `/sandbox/config`); `EMAIL_ADDRESS` in a site's `.env` is only a fallback, defaulting to the site's fan from the table above.
 
 ### Changing the venue list
 
-`src/data/tourVenues.ts` IDs must match the event IDs in `fanclub-demo`'s `tourSeed.ts`. If you add a venue, add it in both places and reseed the mock (`npm run start:fresh`).
+IDs in a site's `src/data/tourVenues.ts` must match the event IDs in `fanclub-demo/src/db/tourSeed.ts`. If you add a venue, add it in both places; the sandbox reseeds on every start.
 
 ---
 
@@ -415,15 +347,15 @@ BRIDGE_URL=http://localhost:3003
 
 | Symptom | Likely cause |
 |---|---|
-| `Could not reach the ticketing bridge` on any page | Bridge not running on `:3003`, or `BRIDGE_URL` is wrong |
-| Bridge fails at startup with "Invalid environment configuration" | A variable in the bridge `.env` is missing or malformed. The message lists which one |
-| `502 UPSTREAM_AUTH_FAILED` | Bridge API keys or partner ID don't match the mock `.env` |
-| `ECONNREFUSED` to `:3001` or `:3002` | `fanclub-demo` isn't running |
-| `404 EVENT_NOT_FOUND` on availability | Mock not reseeded after adding tour events. Run `npm run start:fresh` |
-| `409 SEATS_UNAVAILABLE` on lock | Those seats were sold or held earlier. Reseed, or pick another pair |
-| Page 2B redirects to 2A | The account has no presale access (Silver, Basic, or an inactive membership) |
-| "EMAIL_ADDRESS is not set" | Missing `.env` entry, or the dev server wasn't restarted after editing it |
-| Barcode shows "Could not render barcode" | `bwip-js` not installed in `frontend` (`pnpm add bwip-js@^4`) |
+| "The ticketing service is unavailable" on any page | The sandbox is not running, or a service crashed. Restart `npm run demo` |
+| "Port ... is already in use" at startup | An earlier sandbox or the tests are still running. Stop them first |
+| Bridge fails at startup with "Invalid environment configuration" | Only when running the bridge alone: a variable in its `.env` is missing or malformed |
+| `404 EVENT_NOT_FOUND` on availability | The site's venue id has no matching event in `tourSeed.ts` |
+| `409 SEATS_UNAVAILABLE` on lock | Those seats were sold or held. Use Reset on the operator page, or pick another option |
+| Checkout says the hold expired | Use "Choose seats again" to reserve again |
+| Checkout is declined | "Decline payment" is on in the operator page. Turn it off and retry |
+| A site returns to its first page by itself | The operator switched member or reset the environment |
+| A site redirects to the sign-in page | The fan account has no presale access or an inactive membership |
+| `better-sqlite3` fails to load | Use Node 22.12+, or run `npm rebuild better-sqlite3` |
 
-Running `npx tsx src/e2e.ts` against a healthy stack is the quickest way to confirm each link in the chain works.
-Rate the overall quality of Response A
+`npm test` is the quickest way to confirm each link in the chain works.

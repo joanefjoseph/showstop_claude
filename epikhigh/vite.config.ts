@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => {
       proxy: bridgeProxy,
     },
     define: {
-      __EMAIL_ADDRESS__: JSON.stringify(env.EMAIL_ADDRESS ?? ""),
+      __EMAIL_ADDRESS__: JSON.stringify(env.EMAIL_ADDRESS ?? "epikhigh_fan@gmail.com"),
     },
   }
 })

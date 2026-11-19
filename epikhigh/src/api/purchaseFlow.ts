@@ -12,7 +12,7 @@ const DEMO_ADDRESS = {
 const DEMO_PAYMENT = { paymentToken: "tok_weversepay_demo", method: "WALLET" as const };
 
 function configuredEmail(): string {
-  const email = __EMAIL_ADDRESS__.trim();
+  const email = (sessionStorage.getItem("sandbox-email") || __EMAIL_ADDRESS__).trim();
   if (!email) throw new Error("EMAIL_ADDRESS is not set in .env (restart the Vite dev server after editing it)");
   return email;
 }
@@ -144,8 +144,26 @@ export async function completePurchase(): Promise<PlacedOrder> {
     throw new Error("Your seat hold expired — go back and reserve seats again");
   }
 
-  await bridge.attachBilling(cart.cartId, buildBilling(member), member.membershipId);
-  const res = await bridge.commitCart(cart.cartId, `weverse-${cart.cartId}`, member.membershipId);
+  const expireHold = (err: unknown) => {
+    if (err instanceof BridgeError && err.status === 410) {
+      updateSession({ cart: { ...cart, holdExpiresAt: new Date(0).toISOString() } });
+    }
+  };
+  try {
+    await bridge.attachBilling(cart.cartId, buildBilling(member), member.membershipId);
+  } catch (err) {
+    expireHold(err);
+    // 409 = billing already attached (a retry after a declined/failed commit)
+    if (!(err instanceof BridgeError) || err.status !== 409) throw err;
+  }
+  let res;
+  try {
+    res = await bridge.commitCart(cart.cartId, `weverse-${cart.cartId}`, member.membershipId);
+  } catch (err) {
+    expireHold(err);
+    throw err;
+  }
+  if (res.status !== "CONFIRMED") throw new Error("Your order is processing. Please retry to check its status.");
 
   const order: PlacedOrder = {
     orderId: res.orderId,
@@ -159,9 +177,9 @@ export async function completePurchase(): Promise<PlacedOrder> {
 
 /* ───────────── 2E: mobile ticket ───────────── */
 
-export async function fetchMobileTicket(): Promise<MobileTicketResponse> {
+export async function fetchMobileTicket(index = 0): Promise<MobileTicketResponse> {
   const member = await currentMember();
   const { order } = getSession();
   if (!order?.ticketIds.length) throw new Error("No purchased tickets found in this session");
-  return bridge.getMobileTicket(order.ticketIds[0], member.membershipId);
+  return bridge.getMobileTicket(order.ticketIds[index], member.membershipId);
 }

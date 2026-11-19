@@ -19,6 +19,8 @@ export default function Wireframe2E({ params }: PageProps) {
 
   // MembershipGate only renders this page once the member is verified and cached.
   const member = getSession().member;
+  const order = getSession().order;
+  const [ticketIndex, setTicketIndex] = useState(0);
   const handle = member ? `@${member.membershipId}` : "unverified";
 
   // GET /tickets/:ticketId: the bridge derives a fresh rotating value on every call,
@@ -26,13 +28,14 @@ export default function Wireframe2E({ params }: PageProps) {
   const [ticket, setTicket] = useState<MobileTicketResponse | null>(null);
   const [ticketError, setTicketError] = useState<string | null>(null);
   useEffect(() => {
+    setTicket(null);
     let cancelled = false;
     let timer: number | undefined;
     let hadTicket = false;
 
     const load = async () => {
       try {
-        const t = await fetchMobileTicket();
+        const t = await fetchMobileTicket(ticketIndex);
         if (cancelled) return;
         hadTicket = true;
         setTicket(t);
@@ -46,7 +49,7 @@ export default function Wireframe2E({ params }: PageProps) {
         if (cancelled) return;
         setTicketError(describeError(err));
         // A refresh failed after we already showed a ticket → keep trying; first-load failures stop here
-        if (hadTicket) timer = window.setTimeout(load, 5000);
+        timer = window.setTimeout(load, 5000);
       }
     };
 
@@ -55,7 +58,7 @@ export default function Wireframe2E({ params }: PageProps) {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, []);
+  }, [ticketIndex]);
 
   const rotationSecondsLeft = useCountdown(ticket?.barcode.rotating ? ticket.barcode.nextRotationAt : undefined);
 
@@ -97,10 +100,21 @@ export default function Wireframe2E({ params }: PageProps) {
       title="You're In"
       description={`See you at ${venue.venue} on ${venue.dateLabel}. Your mobile ticket is ready.`}
     >
+      {(order?.ticketIds.length ?? 0) > 1 && (
+        <div style={{ display: "flex", gap: 8, margin: "12px 0" }}>
+          {order!.ticketIds.map((id, i) => (
+            <button key={id} type="button" aria-pressed={ticketIndex === i} onClick={() => setTicketIndex(i)}
+              style={{ fontSize: 13, padding: "6px 14px", cursor: "pointer", border: "1px solid currentColor", background: i === ticketIndex ? "rgba(128,128,128,.2)" : "transparent", fontWeight: i === ticketIndex ? 700 : 400 }}>
+              Ticket {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
+      {!order && <a href="#/2b">Browse available shows</a>}
       <div className="purchase-meta">
-        <span className="pill pill-dark">✓ Order confirmed</span>
+        <span className="pill pill-dark">{order ? "✓ Order confirmed" : "Your tickets"}</span>
         <span className="api-tag">
-          Ticket ID: {ticket?.ticketId ?? "…"}{ticketCount > 1 ? ` · 1 of ${ticketCount}` : ""}
+          Ticket ID: {ticket?.ticketId ?? "…"}{ticketCount > 1 ? ` · ${ticketIndex + 1} of ${ticketCount}` : ""}
         </span>
       </div>
 
@@ -123,7 +137,7 @@ export default function Wireframe2E({ params }: PageProps) {
 
           {/* Barcode area: real barcode from GET /tickets/:ticketId */}
           <div className="ticket-body">
-            {ticket ? (
+            {ticket && (!ticket.barcode.rotating || (rotationSecondsLeft ?? 0) > 0) ? (
               <TicketBarcode barcode={ticket.barcode} />
             ) : (
               <div className="barcode-placeholder">
@@ -137,7 +151,7 @@ export default function Wireframe2E({ params }: PageProps) {
               </p>
             )}
             <BridgeErrorNote message={ticketError} />
-            <p className="ticket-note">Member: {handle} | Verified Device ID: #iPhone16-A92B</p>
+            <p className="ticket-note">Member: {handle}</p>
             <div className="ticket-actions">
               <button type="button" className="button button-light">Save to Apple / Google Wallet</button>
               <button type="button" className="button button-pink">View Excl. Merch</button>

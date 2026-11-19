@@ -34,7 +34,7 @@ export default function Wireframe2D({ params }: PageProps) {
     ["Seats", seatsLabel],
     ["Fan Account", fanLabel],
     ["Total", totalLabel],
-    ["Protection", "JWalkerz Fan Auth + Show Stop"],
+    ["Protection", "JWalkerz Fan Authentication"],
   ];
 
   // Only the mm:ss digits are blue; the expired message keeps the red pill
@@ -93,15 +93,16 @@ export default function Wireframe2D({ params }: PageProps) {
             aria-busy={pendingKey === "purchase"}
             onClick={(e) => {
               e.preventDefault();
+              if (remaining === 0 || !cart) { window.location.hash = `#/2c?venue=${venue.id}`; return; }
               void run("purchase", completePurchase, nextHref);
             }}
           >
-            {pendingKey === "purchase" ? "Processing payment…" : "Complete Purchase & Issue Tickets"}
+            {pendingKey === "purchase" ? "Processing payment…" : (remaining === 0 || !cart ? "Choose seats again" : "Complete Purchase & Issue Tickets")}
           </a>
         </div>
         <BridgeErrorNote message={error} />
 
-        <p className="purchase-foot">Protected by JWalkerz Fan Authentication &amp; Powered by Show Stop</p>
+        <p className="purchase-foot">Protected by JWalkerz Fan Authentication</p>
       </div>
     </PurchasePageLayout>
   );

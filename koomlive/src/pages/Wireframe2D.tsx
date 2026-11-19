@@ -39,7 +39,7 @@ const seatsLabel =
     [gaCart ? "Tickets" : "Seats", seatsLabel],
     ["Member Account", memberLabel],
     ["Total", totalLabel],
-    ["Protection", "KOOM Member Auth + Show Stop"],
+    ["Protection", "KOOM Member Authentication"],
   ];
 
   const holdText =
@@ -101,11 +101,11 @@ const seatsLabel =
             aria-busy={purchasing}
             onClick={() => void run("purchase", completePurchase, nextHref)}
           >
-            {purchasing ? "Processing payment…" : "Complete Purchase & Issue Tickets"} <span aria-hidden="true">→</span>
+            {purchasing ? "Processing payment…" : (remaining === 0 || !cart ? "Choose seats again" : "Complete Purchase & Issue Tickets")} <span aria-hidden="true">→</span>
           </button>
           <BridgeErrorNote message={error} />
 
-          <p className="fine-print">🔒 Protected by KOOM Member Authentication · Powered by Show Stop</p>
+          <p className="fine-print">🔒 Protected by KOOM Member Authentication</p>
         </div>
       </div>
     </PurchasePageLayout>
