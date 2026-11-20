@@ -8,7 +8,7 @@ import Wireframe2D from "./pages/Wireframe2D";
 import Wireframe2E from "./pages/Wireframe2E";
 
 interface Page {
-  /** URL hash, e.g. http://localhost:4004/#/2c */
+  /** URL hash, e.g. http://localhost:4005/#/2c */
   id: string;
   Component: ComponentType<PageProps>;
   /** The page needs a signed-in, eligible member in the session (any tier) */

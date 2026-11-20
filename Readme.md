@@ -1,6 +1,6 @@
 # Show Stop: Fanclub Ticketing Sandbox
 
-This repository simulates the full concert-ticket journey for five artist sites: a fan verifies their fan-club membership, checks live seat inventory, locks seats on a seating diagram, pays, and receives a rotating mobile ticket barcode. Everything runs locally against mock providers with synthetic data. No real payments are taken.
+This repository simulates the full concert-ticket journey for six sites: a generic touring-artist demo and five artist sites: a fan verifies their fan-club membership, checks live seat inventory, locks seats on a seating diagram, pays, and receives a rotating mobile ticket barcode. Everything runs locally against mock providers with synthetic data. No real payments are taken.
 
 > **Quick start** (Node 22.12+): from the repository root run `npm ci`, then `npm run demo`. Open any site from the table below. See [SANDBOX.md](SANDBOX.md) for the operator controls, walkthrough, checks and the boundaries of what is simulated.
 
@@ -10,11 +10,12 @@ This repository simulates the full concert-ticket journey for five artist sites:
 |---|---|---|
 | `fanclub-demo/` | Mock upstream services: a ticket-vendor API, a membership API, and a SQLite database behind both | Vendor `3001`, Membership `3002` (API console `3004` when run on its own) |
 | `fanclub-ticketing-bridge/` | Express API gateway the sites talk to. It validates requests, applies business rules and calls the two mocks | `3003` |
-| `frontend/` | Weverse / BTS site (BTS World Tour "ARIRANG") | `4000` |
-| `epikhigh/` | Epik High North America Tour site | `4001` |
-| `davidjin/` | David Jin Comedy site | `4002` |
-| `koomlive/` | KOOM Live site, with assigned seating and general admission | `4003` |
-| `jaypark/` | Jay Park World Tour site, with EN / 한 / ES toggle | `4004` |
+| `generic/` | Generic touring-artist site (fictional artist NOVA): tour page, presale gate, Floor GA + Club / Lower Bowl, add-ons | `4000` |
+| `frontend/` | Weverse / BTS site (BTS World Tour "ARIRANG") | `4001` |
+| `epikhigh/` | Epik High North America Tour site | `4002` |
+| `davidjin/` | David Jin Comedy site | `4003` |
+| `koomlive/` | KOOM Live site, with assigned seating and general admission | `4004` |
+| `jaypark/` | Jay Park World Tour site, with EN / 한 / ES toggle | `4005` |
 | `scripts/` | `sandbox.ts` (starts everything), `operator.html` (operator controls), `regression.ts` (checks) | |
 
 The directories must sit side by side. `fanclub-demo/src/bridgeContracts.ts` imports types from `../../fanclub-ticketing-bridge/src/types/`.
@@ -34,11 +35,12 @@ Keep the terminal open; `Ctrl+C` stops everything. Startup seeds fresh inventory
 
 | Site | URL | Operator controls | Default fan |
 |---|---|---|---|
-| Weverse / BTS | http://127.0.0.1:4000/#/2a | `:4000/operator` | `bts_army@gmail.com` |
-| Epik High | http://127.0.0.1:4001/#/2a | `:4001/operator` | `epikhigh_fan@gmail.com` |
-| David Jin | http://127.0.0.1:4002/#/2a | `:4002/operator` | `funnygirl@gmail.com` |
-| KOOM Live | http://127.0.0.1:4003/#/2a | `:4003/operator` | `fan@example.com` |
-| Jay Park | http://127.0.0.1:4004/#/2a | `:4004/operator` | `jpark_fan@gmail.com` |
+| Generic tour (NOVA) | http://127.0.0.1:4000/#/2a | `:4000/operator` | `tourfan@example.com` |
+| Weverse / BTS | http://127.0.0.1:4001/#/2a | `:4001/operator` | `bts_army@gmail.com` |
+| Epik High | http://127.0.0.1:4002/#/2a | `:4002/operator` | `epikhigh_fan@gmail.com` |
+| David Jin | http://127.0.0.1:4003/#/2a | `:4003/operator` | `funnygirl@gmail.com` |
+| KOOM Live | http://127.0.0.1:4004/#/2a | `:4004/operator` | `fan@example.com` |
+| Jay Park | http://127.0.0.1:4005/#/2a | `:4005/operator` | `jpark_fan@gmail.com` |
 
 No `.env` files are needed. The runner configures the mock services and the bridge itself, and serves each site's `/bridge` path on the same origin.
 
@@ -47,7 +49,7 @@ Checks:
 ```sh
 npm run typecheck       # all sites, services and scripts
 npm test                # integration + regression checks on separate ports
-npm run build           # production builds of all five sites
+npm run build           # production builds of all six sites
 ```
 
 The tests use ports 4001 to 4003 for the services, so stop the sandbox before running them.
@@ -55,7 +57,7 @@ The tests use ports 4001 to 4003 for the services, so stop the sandbox before ru
 ## How the pieces connect
 
 ```
- Browser (one of the five sites, ports 4000-4004)
+ Browser (one of the six sites, ports 4000-4005)
     |  fetch('/bridge/...')            fetch('/sandbox/config')
     v
  Sandbox server (scripts/sandbox.ts): same-origin /bridge proxy, operator controls
@@ -276,11 +278,11 @@ MEMBERSHIP_CACHE_TTL_SECONDS=60
 
 ---
 
-## 3. Customer sites (`frontend/`, `epikhigh/`, `davidjin/`, `koomlive/`, `jaypark/`)
+## 3. Customer sites (`generic/`, `frontend/`, `epikhigh/`, `davidjin/`, `koomlive/`, `jaypark/`)
 
 ### Purpose
 
-Five Vite + React web apps that mimic each artist's ticketing journey over the same bridge API. Each page is a route in the URL hash:
+Six Vite + React web apps that mimic each artist's ticketing journey over the same bridge API. Each page is a route in the URL hash:
 
 | Route | What it does |
 |---|---|

@@ -7,8 +7,8 @@
   },
   "scripts": {
     "demo": "tsx scripts/sandbox.ts",
-    "typecheck": "npm run typecheck --prefix fanclub-demo && npm run typecheck --prefix fanclub-ticketing-bridge && npm run typecheck --prefix frontend && npm run typecheck --prefix epikhigh && npm run typecheck --prefix davidjin && npm run typecheck --prefix koomlive && npm run typecheck --prefix jaypark && tsc --noEmit -p tsconfig.json",
-    "build": "npm run build --prefix fanclub-ticketing-bridge && npm run build --prefix frontend && npm run build --prefix epikhigh && npm run build --prefix davidjin && npm run build --prefix koomlive && npm run build --prefix jaypark",
+    "typecheck": "npm run typecheck --prefix fanclub-demo && npm run typecheck --prefix fanclub-ticketing-bridge && npm run typecheck --prefix generic && npm run typecheck --prefix frontend && npm run typecheck --prefix epikhigh && npm run typecheck --prefix davidjin && npm run typecheck --prefix koomlive && npm run typecheck --prefix jaypark && tsc --noEmit -p tsconfig.json",
+    "build": "npm run build --prefix fanclub-ticketing-bridge && npm run build --prefix generic && npm run build --prefix frontend && npm run build --prefix epikhigh && npm run build --prefix davidjin && npm run build --prefix koomlive && npm run build --prefix jaypark",
     "test": "tsx scripts/sandbox.ts --test",
     "demo:built": "tsx scripts/sandbox.ts --built",
     "format": "prettier --write frontend/src scripts"

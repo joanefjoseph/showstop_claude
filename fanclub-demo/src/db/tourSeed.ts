@@ -4,11 +4,12 @@ import type Database from 'better-sqlite3';
  * Five tours share this mock database — one per frontend, all served through
  * the same bridge (:3003):
  *
- *   BTS WORLD TOUR 'ARIRANG'            → BTS/Weverse frontend (Vite :3000), ids = venue slug
- *   EPIK HIGH North America Tour '3.0'  → Epik High frontend   (Vite :4000), ids = city slug
- *   Lil Dumplings Comedy Show           → David Jin frontend   (Vite :4002), ids = venue slug
- *   Jay Park 2026 World Tour            → Jay Park frontend     (Vite :4001), ids = venue slug
- *   KOOM 2026 (Stage + Live)            → KOOM Live frontend   (Vite :4003), id  = event slug
+ *   NOVA Afterglow World Tour           → Generic tour frontend (Vite :4000), ids = generic-<city>
+ *   BTS WORLD TOUR 'ARIRANG'            → BTS/Weverse frontend (Vite :4001), ids = venue slug
+ *   EPIK HIGH North America Tour '3.0'  → Epik High frontend   (Vite :4002), ids = city slug
+ *   Lil Dumplings Comedy Show           → David Jin frontend   (Vite :4003), ids = venue slug
+ *   Jay Park 2026 World Tour            → Jay Park frontend     (Vite :4005), ids = venue slug
+ *   KOOM 2026 (Stage + Live)            → KOOM Live frontend   (Vite :4004), id  = event slug
  *
  * event_id === the id in that frontend's src/data/tourVenues.ts. Ids must be unique
  * across ALL tours: venue, price-level and seat ids are all derived from them.
@@ -51,7 +52,9 @@ interface GaTicketType {
 
 type Seating =
   | { kind: 'ASSIGNED'; sections: readonly AssignedSection[] }
-  | { kind: 'GENERAL_ADMISSION'; ticketTypes: readonly GaTicketType[] };
+  | { kind: 'GENERAL_ADMISSION'; ticketTypes: readonly GaTicketType[] }
+  /** General-admission ticket types (e.g. a standing floor) alongside assigned-seat sections */
+  | { kind: 'MIXED'; ticketTypes: readonly GaTicketType[]; sections: readonly AssignedSection[] };
 
 interface TourStop {
   id: string;
@@ -61,6 +64,8 @@ interface TourStop {
   startsAt: string;
   /** Overrides the tour's seating for this stop only */
   seating?: Seating;
+  /** Overrides the tour's sale type for this stop only */
+  saleType?: 'PRESALE' | 'GENERAL';
 }
 
 interface Tour {
@@ -177,7 +182,33 @@ const KOOM_2026_STOPS: readonly TourStop[] = [
   { id: 'koom-live-terminal-5', city: 'New York', country: 'US', venue: 'Terminal 5', startsAt: '2026-10-16T14:00:00.000Z' }, // Oct 16
 ];
 
+/**
+ * Generic touring-artist demo ("NOVA — Afterglow World Tour"). Every venue has a standing
+ * Floor (general admission) plus two assigned-seat levels, Lower Bowl and Club (seats like A11).
+ * Prices are per ticket. Some dates are presale-only (fan-club members), the rest general sale.
+ * Must match the generic frontend's src/data/tour.ts.
+ */
+const GENERIC_SEATING: Seating = {
+  kind: 'MIXED',
+  ticketTypes: [
+    { key: 'floor', section: 'Floor', name: 'Floor', face: 95, fees: 15, capacity: 200 },
+  ],
+  sections: [
+    { section: 'Lower Bowl', level: 'lower', name: 'Lower Bowl', face: 140, fees: 20, rows: ['A', 'B', 'C', 'D'], seatsPerRow: 14 },
+    { section: 'Club',       level: 'club',  name: 'Club',       face: 210, fees: 25, rows: ['A', 'B', 'C'],      seatsPerRow: 12 },
+  ],
+};
+const GENERIC_STOPS: readonly TourStop[] = [
+  { id: 'generic-new-york',    city: 'New York',    country: 'US', venue: 'Harbor Arena',         startsAt: '2027-03-12T00:00:00.000Z', saleType: 'PRESALE' },
+  { id: 'generic-los-angeles', city: 'Los Angeles', country: 'US', venue: 'Pacific Dome',         startsAt: '2027-03-16T03:00:00.000Z', saleType: 'PRESALE' },
+  { id: 'generic-chicago',     city: 'Chicago',     country: 'US', venue: 'Lakefront Theater',    startsAt: '2027-03-20T01:00:00.000Z', saleType: 'GENERAL' },
+  { id: 'generic-toronto',     city: 'Toronto',     country: 'CA', venue: 'Northline Centre',     startsAt: '2027-03-24T00:00:00.000Z', saleType: 'PRESALE' },
+  { id: 'generic-austin',      city: 'Austin',      country: 'US', venue: 'Riverside Amphitheater', startsAt: '2027-03-28T01:00:00.000Z', saleType: 'GENERAL' },
+  { id: 'generic-london',      city: 'London',      country: 'UK', venue: 'Meridian Hall',        startsAt: '2027-04-03T19:00:00.000Z', saleType: 'GENERAL' },
+];
+
 const TOURS: readonly Tour[] = [
+  { name: 'NOVA — Afterglow World Tour',        saleType: 'GENERAL', seating: GENERIC_SEATING,   stops: GENERIC_STOPS },
   { name: "BTS WORLD TOUR 'ARIRANG'",           saleType: 'PRESALE', seating: ARENA_SEATING,     stops: BTS_STOPS },
   { name: "EPIK HIGH North America Tour '3.0'", saleType: 'PRESALE', seating: ARENA_SEATING,     stops: EPIK_HIGH_STOPS },
   { name: 'Lil Dumplings Comedy Show',          saleType: 'GENERAL', seating: ARENA_SEATING,     stops: DAVID_JIN_STOPS },
@@ -200,6 +231,14 @@ function assertValidTours(): void {
       seen.add(stop.id);
 
       const seating = stop.seating ?? tour.seating;
+      if (seating.kind === 'MIXED') {
+        if (seating.sections.length === 0 || seating.ticketTypes.length === 0) {
+          throw new Error(`tourSeed: '${stop.id}' has mixed seating but is missing sections or ticket types`);
+        }
+        const names = [...seating.sections.map((s) => s.section), ...seating.ticketTypes.map((g) => g.section)];
+        if (new Set(names).size !== names.length) throw new Error(`tourSeed: '${stop.id}' has duplicate section names`);
+        continue;
+      }
       if (seating.kind === 'ASSIGNED') {
         if (seating.sections.length === 0) throw new Error(`tourSeed: '${stop.id}' has assigned seating but no sections`);
         continue;
@@ -267,11 +306,14 @@ export function seedTourEvents(db: Database.Database, seededAt: string): void {
     for (const v of tour.stops) {
       const venueId = `ven_${v.id}`;
       insVenue.run(venueId, v.venue, v.city, v.country);
-      insEvent.run(v.id, `${tour.name} — ${v.city}`, v.startsAt, venueId, tour.saleType, seededAt);
+      insEvent.run(v.id, `${tour.name} — ${v.city}`, v.startsAt, venueId, v.saleType ?? tour.saleType, seededAt);
 
       const seating = v.seating ?? tour.seating;
       if (seating.kind === 'GENERAL_ADMISSION') seedGeneralAdmission(v.id, seating.ticketTypes);
-      else seedAssignedSeats(v.id, seating.sections);
+      else if (seating.kind === 'MIXED') {
+        seedGeneralAdmission(v.id, seating.ticketTypes);
+        seedAssignedSeats(v.id, seating.sections);
+      } else seedAssignedSeats(v.id, seating.sections);
     }
   }
 }

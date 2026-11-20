@@ -12,7 +12,7 @@ npm run demo          # dev server with hot reload
 # or: npm run build && npm run demo:built
 ```
 
-Open http://127.0.0.1:4000/#/2a. The command starts the mock services, the bridge and all five customer sites. Operator controls for this site are at http://127.0.0.1:4000/operator. See [SANDBOX.md](../SANDBOX.md).
+Open http://127.0.0.1:4001/#/2a. The command starts the mock services, the bridge and all six customer sites. Operator controls for this site are at http://127.0.0.1:4001/operator. See [SANDBOX.md](../SANDBOX.md).
 
 ## Pages
 
